@@ -29,7 +29,7 @@ with st.sidebar:
 
 # Ana Ekran
 st.title("🧠 Yiğit AI - 7/24 Bulut Portalı")
-st.write("Bu site bulut sunucularda barınır, dilediğiniz yerden 7/24 erişebilirsiniz.")
+st.write("hoşgeldiniz.")
 
 # Session Durumu
 if "messages" not in st.session_state:
