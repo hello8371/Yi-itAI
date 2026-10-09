@@ -1,3 +1,4 @@
+
 import streamlit as st
 import google.generativeai as genai
 
@@ -11,6 +12,12 @@ PREMIUM_PROMPT = (
     "HER ZAMAN sadece Türkçe konuşacaksın."
 )
 
+# Gizli Kasa (Secrets) üzerinden API anahtarını güvenle alıyoruz
+try:
+    api_key = st.secrets["GEMINI_API_KEY"]
+except Exception:
+    api_key = None
+
 # Sol Panel
 with st.sidebar:
     st.title("🧠 Yiğit AI - Bulut")
@@ -18,10 +25,6 @@ with st.sidebar:
     st.write("Bilgisayarınız kapalı olsa bile bu site 7/24 dünyaya açıktır.")
     st.write("---")
     
-    # Kullanıcıdan API Key İsteme
-    api_key = st.text_input("Google Gemini API Anahtarı", type="password", placeholder="AIzaSy...")
-    
-    st.write("---")
     if st.button("🗑️ Sohbeti Sıfırla"):
         st.session_state.messages = []
         st.rerun()
@@ -43,7 +46,7 @@ prompt = st.chat_input("Yiğit AI'ya bir şey sorun...")
 
 if prompt:
     if not api_key:
-        st.error("Lütfen sol panelden API Key'inizi girin! (Google AI Studio'dan ücretsiz alabilirsiniz)")
+        st.error("API anahtarı bulunamadı! Lütfen Streamlit Cloud 'Secrets' bölümüne GEMINI_API_KEY eklediğinizden emin olun.")
     else:
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
