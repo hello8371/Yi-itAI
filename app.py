@@ -1,4 +1,3 @@
-
 import streamlit as st
 import google.generativeai as genai
 
@@ -22,7 +21,6 @@ except Exception:
 with st.sidebar:
     st.title("🧠 Yiğit AI - Bulut")
     st.success("☁️ 7/24 Bulut Modu Aktif")
-    st.write("Bilgisayarınız kapalı olsa bile bu site 7/24 dünyaya açıktır.")
     st.write("---")
     
     if st.button("🗑️ Sohbeti Sıfırla"):
