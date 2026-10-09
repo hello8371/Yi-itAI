@@ -1,26 +1,8 @@
 import streamlit as st
 import google.generativeai as genai
-import os
 
 # Sayfa Ayarları
 st.set_page_config(page_title="Yiğit AI - 7/24 Bulut Portalı", page_icon="🧠", layout="wide")
-
-# CSS: Şık Koyu Tema
-st.markdown("""
-    <style>
-    .stApp {
-        background-color: #0e1117;
-        color: #ffffff;
-    }
-    .stChatMessage {
-        background-color: #1e222a !important;
-        border-radius: 10px;
-        padding: 12px;
-        margin-bottom: 10px;
-        color: #ffffff !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
 
 # Sistem Talimatı
 PREMIUM_PROMPT = (
@@ -33,11 +15,11 @@ PREMIUM_PROMPT = (
 with st.sidebar:
     st.title("🧠 Yiğit AI - Bulut")
     st.success("☁️ 7/24 Bulut Modu Aktif")
-    st.write("Bilgisayarınız kapalı olsa bile bu site dünyaya açıktır.")
+    st.write("Bilgisayarınız kapalı olsa bile bu site 7/24 dünyaya açıktır.")
     st.write("---")
     
-    # Kullanıcıdan API Key İsteme (Güvenli Alan)
-    api_key = st.text_input("Google Gemini API Key", type="password", placeholder="AIzaSy...")
+    # Kullanıcıdan API Key İsteme
+    api_key = st.text_input("Google Gemini API Anahtarı", type="password", placeholder="AIzaSy...")
     
     st.write("---")
     if st.button("🗑️ Sohbeti Sıfırla"):
@@ -63,12 +45,10 @@ if prompt:
     if not api_key:
         st.error("Lütfen sol panelden API Key'inizi girin! (Google AI Studio'dan ücretsiz alabilirsiniz)")
     else:
-        # Kullanıcı mesajını ekle
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
             
-        # Yapay zeka yanıtı
         with st.chat_message("assistant"):
             try:
                 genai.configure(api_key=api_key)
@@ -77,7 +57,6 @@ if prompt:
                     system_instruction=PREMIUM_PROMPT
                 )
                 
-                # Geçmişi Gemini formatına uyarla
                 chat_history = []
                 for m in st.session_state.messages[:-1]:
                     role = "user" if m["role"] == "user" else "model"
