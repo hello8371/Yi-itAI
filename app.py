@@ -1,6 +1,5 @@
 import streamlit as st
 import google.generativeai as genai
-from PIL import Image
 
 # Sayfa Ayarları
 st.set_page_config(page_title="Yiğit AI - 7/24 Bulut Portalı", page_icon="🧠", layout="wide")
@@ -12,28 +11,22 @@ PREMIUM_PROMPT = (
     "HER ZAMAN sadece Türkçe konuşacaksın."
 )
 
-# Gizli Kasa (Secrets) üzerinden API anahtarını güvenle alıyoruz
+# Çoklu API Anahtarı Yönetimi (Yedekli Sistem)
+api_keys = []
 try:
-    api_key = st.secrets["GEMINI_API_KEY"]
+    if "GEMINI_API_KEY" in st.secrets:
+        api_keys.append(st.secrets["GEMINI_API_KEY"])
+    if "GEMINI_API_KEY_2" in st.secrets:
+        api_keys.append(st.secrets["GEMINI_API_KEY_2"])
 except Exception:
-    api_key = None
+    pass
 
-# Sol Panel (Dosya Yükleme ve Ayarlar)
+# Sol Panel
 with st.sidebar:
     st.title("🧠 Yiğit AI - Bulut")
-    st.success("☁️ 7/24 Bulut Modu Aktif")
+    st.success("☁️ 7/24 Bulut Modu Aktif (Yedekli Koruma)")
     st.write("---")
     
-    st.subheader("📁 Dosya & Görsel Yükleme")
-    uploaded_file = st.file_uploader("Dosya veya görsel seçin...", type=["png", "jpg", "jpeg", "pdf", "txt", "csv"])
-    if uploaded_file is not None:
-        st.info(f"Yüklenen: {uploaded_file.name}")
-
-    st.write("---")
-    st.subheader("⚙️ Sohbet Seçenekleri")
-    temperature = st.slider("Yaratıcılık", min_value=0.0, max_value=1.0, value=0.7, step=0.1)
-    
-    st.write("---")
     if st.button("🗑️ Sohbeti Sıfırla"):
         st.session_state.messages = []
         st.rerun()
@@ -50,53 +43,47 @@ if "messages" not in st.session_state:
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
-        if "file_name" in message and message["file_name"]:
-            st.caption(f"📎 Ekli dosya: {message['file_name']}")
 
 prompt = st.chat_input("Yiğit AI'ya bir şey sorun...")
 
-if prompt or uploaded_file:
-    if not api_key:
-        st.error("API anahtarı bulunamadı! Lütfen Streamlit Cloud 'Secrets' bölümüne GEMINI_API_KEY eklediğinizden emin olun.")
+if prompt:
+    if not api_keys:
+        st.error("API anahtarı bulunamadı! Lütfen Streamlit Cloud 'Secrets' bölümüne anahtarları eklediğinizden emin olun.")
     else:
-        user_message = prompt if prompt else "Bu dosyayı analiz et."
-        file_info = uploaded_file.name if uploaded_file else None
-        
-        # Kullanıcı mesajını geçmişe ekle
-        st.session_state.messages.append({"role": "user", "content": user_message, "file_name": file_info})
+        st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
-            st.markdown(user_message)
-            if uploaded_file:
-                st.caption(f"📎 Ekli dosya: {uploaded_file.name}")
+            st.markdown(prompt)
             
         with st.chat_message("assistant"):
-            try:
-                genai.configure(api_key=api_key)
-                
-                # Model yapılandırması
-                generation_config = {"temperature": temperature}
-                model = genai.GenerativeModel(
-                    model_name="gemini-2.5-flash",
-                    system_instruction=PREMIUM_PROMPT,
-                    generation_config=generation_config
-                )
-                
-                # İçerik hazırlığı
-                content_inputs = [user_message]
-                if uploaded_file:
-                    if uploaded_file.type.startswith("image/"):
-                        img = Image.open(uploaded_file)
-                        content_inputs.append(img)
-                    else:
-                        file_bytes = uploaded_file.getvalue().decode("utf-8", errors="ignore")
-                        content_inputs.append(f"\n[Dosya İçeriği ({uploaded_file.name})]:\n{file_bytes}")
-
-                # Güvenli yanıt üretme
-                response = model.generate_content(content_inputs)
-                
-                st.markdown(response.text)
-                st.session_state.messages.append({"role": "assistant", "content": response.text})
-                
-            except Exception as e:
-                st.error(f"Bir hata oluştu: {e}")
- 
+            response_text = None
+            success = False
+            
+            # Anahtarları sırayla dener (1. dolar veya hata verirse otomatik 2.'ye geçer)
+            for idx, key in enumerate(api_keys):
+                try:
+                    genai.configure(api_key=key)
+                    model = genai.GenerativeModel(
+                        model_name="gemini-1.5-flash",
+                        system_instruction=PREMIUM_PROMPT
+                    )
+                    
+                    chat_history = []
+                    for m in st.session_state.messages[:-1]:
+                        role = "user" if m["role"] == "user" else "model"
+                        chat_history.append({"role": role, "parts": [m["content"]]})
+                    
+                    chat = model.start_chat(history=chat_history)
+                    response = chat.send_message(prompt)
+                    
+                    response_text = response.text
+                    success = True
+                    break # Başarılı olursa döngüden çık
+                except Exception as e:
+                    # Eğer hata kota (429) ise sıradaki anahtara geçmeyi dener
+                    continue
+            
+            if success and response_text:
+                st.markdown(response_text)
+                st.session_state.messages.append({"role": "assistant", "content": response_text})
+            else:
+                st.error("Tüm API anahtarlarının günlük kotası doldu! Lütfen daha sonra tekrar deneyin veya yeni bir anahtar ekleyin.")
