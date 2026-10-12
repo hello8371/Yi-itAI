@@ -11,24 +11,20 @@ PREMIUM_PROMPT = (
     "HER ZAMAN sadece Türkçe konuşacaksın."
 )
 
-# 4'lü API Anahtarı Yönetimi (Gelişmiş Kalkan)
+# 5'li API Anahtarı Yönetimi (Aşılmaz Kalkan)
 api_keys = []
 try:
-    if "GEMINI_API_KEY" in st.secrets:
-        api_keys.append(st.secrets["GEMINI_API_KEY"])
-    if "GEMINI_API_KEY_2" in st.secrets:
-        api_keys.append(st.secrets["GEMINI_API_KEY_2"])
-    if "GEMINI_API_KEY_3" in st.secrets:
-        api_keys.append(st.secrets["GEMINI_API_KEY_3"])
-    if "GEMINI_API_KEY_4" in st.secrets:
-        api_keys.append(st.secrets["GEMINI_API_KEY_4"])
+    for i in range(1, 6):
+        key_name = "GEMINI_API_KEY" if i == 1 else f"GEMINI_API_KEY_{i}"
+        if key_name in st.secrets:
+            api_keys.append(st.secrets[key_name])
 except Exception:
     pass
 
 # Sol Panel
 with st.sidebar:
     st.title("🧠 Yiğit AI - Bulut")
-    st.success("☁️ 7/24 Bulut Modu Aktif (4'lü Yedekli Kalkan)")
+    st.success("☁️ 7/24 Bulut Modu Aktif (5'li Dev Kalkan)")
     st.write("---")
     
     if st.button("🗑️ Sohbeti Sıfırla"):
@@ -62,7 +58,7 @@ if prompt:
             response_text = None
             success = False
             
-            # Anahtarları sırayla dener (Biri biterse otomatik sıradakine geçer)
+            # 5 Anahtarı sırayla dener (Kota dolarsa anında bir sonrakine geçer)
             for idx, key in enumerate(api_keys):
                 try:
                     genai.configure(api_key=key)
