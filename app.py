@@ -11,20 +11,22 @@ PREMIUM_PROMPT = (
     "HER ZAMAN sadece Türkçe konuşacaksın."
 )
 
-# Çoklu API Anahtarı Yönetimi (Yedekli Sistem)
+# Üçlü API Anahtarı Yönetimi (Çok Katmanlı Yedekli Sistem)
 api_keys = []
 try:
     if "GEMINI_API_KEY" in st.secrets:
         api_keys.append(st.secrets["GEMINI_API_KEY"])
     if "GEMINI_API_KEY_2" in st.secrets:
         api_keys.append(st.secrets["GEMINI_API_KEY_2"])
+    if "GEMINI_API_KEY_3" in st.secrets:
+        api_keys.append(st.secrets["GEMINI_API_KEY_3"])
 except Exception:
     pass
 
 # Sol Panel
 with st.sidebar:
     st.title("🧠 Yiğit AI - Bulut")
-    st.success("☁️ 7/24 Bulut Modu Aktif (Yedekli Koruma)")
+    st.success("☁️ 7/24 Bulut Modu Aktif (3'lü Yedekli Kalkan)")
     st.write("---")
     
     if st.button("🗑️ Sohbeti Sıfırla"):
@@ -58,7 +60,7 @@ if prompt:
             response_text = None
             success = False
             
-            # Anahtarları sırayla dener (1. dolar veya hata verirse otomatik 2.'ye geçer)
+            # Anahtarları sırayla dener (Biri biterse otomatik sıradakine geçer)
             for idx, key in enumerate(api_keys):
                 try:
                     genai.configure(api_key=key)
@@ -79,11 +81,10 @@ if prompt:
                     success = True
                     break # Başarılı olursa döngüden çık
                 except Exception as e:
-                    # Eğer hata kota (429) ise sıradaki anahtara geçmeyi dener
                     continue
             
             if success and response_text:
                 st.markdown(response_text)
                 st.session_state.messages.append({"role": "assistant", "content": response_text})
             else:
-                st.error("Tüm API anahtarlarının günlük kotası doldu! Lütfen daha sonra tekrar deneyin veya yeni bir anahtar ekleyin.")
+                st.error("Tüm API anahtarlarının günlük kotası doldu! Lütfen daha sonra tekrar deneyin.")
