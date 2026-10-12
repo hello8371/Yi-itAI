@@ -11,7 +11,7 @@ PREMIUM_PROMPT = (
     "HER ZAMAN sadece Türkçe konuşacaksın."
 )
 
-# Üçlü API Anahtarı Yönetimi (Çok Katmanlı Yedekli Sistem)
+# 4'lü API Anahtarı Yönetimi (Gelişmiş Kalkan)
 api_keys = []
 try:
     if "GEMINI_API_KEY" in st.secrets:
@@ -20,13 +20,15 @@ try:
         api_keys.append(st.secrets["GEMINI_API_KEY_2"])
     if "GEMINI_API_KEY_3" in st.secrets:
         api_keys.append(st.secrets["GEMINI_API_KEY_3"])
+    if "GEMINI_API_KEY_4" in st.secrets:
+        api_keys.append(st.secrets["GEMINI_API_KEY_4"])
 except Exception:
     pass
 
 # Sol Panel
 with st.sidebar:
     st.title("🧠 Yiğit AI - Bulut")
-    st.success("☁️ 7/24 Bulut Modu Aktif (3'lü Yedekli Kalkan)")
+    st.success("☁️ 7/24 Bulut Modu Aktif (4'lü Yedekli Kalkan)")
     st.write("---")
     
     if st.button("🗑️ Sohbeti Sıfırla"):
