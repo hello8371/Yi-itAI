@@ -1,5 +1,6 @@
 import streamlit as st
 import google.generativeai as genai
+import time
 
 # Sayfa Ayarları
 st.set_page_config(page_title="Yiğit AI - 7/24 Bulut Portalı", page_icon="🧠", layout="wide")
@@ -11,11 +12,11 @@ PREMIUM_PROMPT = (
     "HER ZAMAN sadece Türkçe konuşacaksın."
 )
 
-# API Anahtarlarını Otomatik Algıla (5'li Kalkan)
+# API Anahtarlarını Otomatik Algıla
 api_keys = []
 try:
     for key_name, key_value in st.secrets.items():
-        if key_name.startswith("GEMINI_API_KEY"):
+        if key_name.startswith("GEMINI_API_KEY") and key_value:
             api_keys.append(key_value)
 except Exception:
     pass
@@ -64,7 +65,6 @@ if prompt:
                 try:
                     genai.configure(api_key=key)
                     
-                    # Hatada belirtilen en güncel model
                     model = genai.GenerativeModel(
                         model_name="models/gemini-3.8-flash",
                         system_instruction=PREMIUM_PROMPT
@@ -80,13 +80,14 @@ if prompt:
                     
                     response_text = response.text
                     success = True
-                    break 
+                    break  # Başarılı olursa döngüyü bitir
                 except Exception as e:
                     last_error = str(e)
+                    # Bir anahtar dakikalık limite (429) takılırsa hemen bir sonrakine geçer
                     continue
             
             if success and response_text:
                 st.markdown(response_text)
                 st.session_state.messages.append({"role": "assistant", "content": response_text})
             else:
-                st.error(f"Hata: {last_error}")
+                st.error("Tüm API anahtarlarının dakikalık istek limiti doldu. Lütfen 20-30 saniye bekleyip tekrar deneyin.")
