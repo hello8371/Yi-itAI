@@ -64,9 +64,9 @@ if prompt:
                 try:
                     genai.configure(api_key=key)
                     
-                    # Güncel ve kararlı model
+                    # Hatada belirtilen en güncel model
                     model = genai.GenerativeModel(
-                        model_name="gemini-2.0-flash",
+                        model_name="models/gemini-3.8-flash",
                         system_instruction=PREMIUM_PROMPT
                     )
                     
