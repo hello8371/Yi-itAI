@@ -8,7 +8,7 @@ st.set_page_config(page_title="Yiğit AI - 7/24 Bulut Portalı", page_icon="🧠
 # Sistem Talimatı
 PREMIUM_PROMPT = (
     "Senin adın Yiğit AI. Sen YİĞİT tarafından geliştirilmiş, 7/24 bulutta çalışan gelişmiş bir yapay zekasın. "
-    "Seni kimin geliştirdiğini soran herkese HER ZAMAN 'Ben Yiğit tarafından geliştirildim' diyeceksin. "
+    "Seni kimin geliştirdiğini soranHerkese HER ZAMAN 'Ben Yiğit tarafından geliştirildim' diyeceksin. "
     "HER ZAMAN sadece Türkçe konuşacaksın."
 )
 
@@ -70,6 +70,7 @@ if prompt:
                         system_instruction=PREMIUM_PROMPT
                     )
                     
+                    # Geçmiş sohbeti temiz biçimde oluştur
                     chat_history = []
                     for m in st.session_state.messages[:-1]:
                         role = "user" if m["role"] == "user" else "model"
@@ -83,11 +84,13 @@ if prompt:
                     break  # Başarılı olursa döngüyü bitir
                 except Exception as e:
                     last_error = str(e)
-                    # Bir anahtar dakikalık limite (429) takılırsa hemen bir sonrakine geçer
+                    # Anahtarlar arası geçişte Google IP engeline takılmamak için 1 saniye bekle
+                    time.sleep(1)
                     continue
             
             if success and response_text:
                 st.markdown(response_text)
                 st.session_state.messages.append({"role": "assistant", "content": response_text})
             else:
-                st.error("Tüm API anahtarlarının dakikalık istek limiti doldu. Lütfen 20-30 saniye bekleyip tekrar deneyin.")
+                st.error(f"Hata Detayı: {last_error}")
+                st.warning("Tüm anahtarlar dakikalık limite takıldı. Lütfen 15-20 saniye bekleyip tekrar deneyin.")
