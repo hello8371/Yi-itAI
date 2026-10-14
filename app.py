@@ -11,21 +11,21 @@ PREMIUM_PROMPT = (
     "HER ZAMAN sadece Türkçe konuşacaksın."
 )
 
-# 5'li API Anahtarı Yönetimi (Aşılmaz Kalkan)
+# API Anahtarlarını Al
 api_keys = []
 try:
-    for i in range(1, 6):
-        key_name = "GEMINI_API_KEY" if i == 1 else f"GEMINI_API_KEY_{i}"
-        if key_name in st.secrets:
-            api_keys.append(st.secrets[key_name])
+    for key_name, key_value in st.secrets.items():
+        if key_name.startswith("GEMINI_API_KEY"):
+            api_keys.append(key_value)
 except Exception:
     pass
 
 # Sol Panel
 with st.sidebar:
     st.title("🧠 Yiğit AI - Bulut")
-    st.success("☁️ 7/24 Bulut Modu Aktif (5'li Dev Kalkan)")
+    st.success("☁️ Hata Ayıklama Modu")
     st.write("---")
+    st.write(f"Algılanan Anahtar Sayısı: {len(api_keys)}")
     
     if st.button("🗑️ Sohbeti Sıfırla"):
         st.session_state.messages = []
@@ -48,7 +48,7 @@ prompt = st.chat_input("Yiğit AI'ya bir şey sorun...")
 
 if prompt:
     if not api_keys:
-        st.error("API anahtarı bulunamadı! Lütfen Streamlit Cloud 'Secrets' bölümüne anahtarları eklediğinizden emin olun.")
+        st.error("Hiç API anahtarı bulunamadı! Lütfen Streamlit Secrets bölümünü kontrol edin.")
     else:
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
@@ -57,8 +57,9 @@ if prompt:
         with st.chat_message("assistant"):
             response_text = None
             success = False
+            last_error = ""
             
-            # 5 Anahtarı sırayla dener (Kota dolarsa anında bir sonrakine geçer)
+            # Anahtarları dener ve gerçek hatayı yakalar
             for idx, key in enumerate(api_keys):
                 try:
                     genai.configure(api_key=key)
@@ -77,12 +78,14 @@ if prompt:
                     
                     response_text = response.text
                     success = True
-                    break # Başarılı olursa döngüden çık
+                    break 
                 except Exception as e:
+                    last_error = str(e)
                     continue
             
             if success and response_text:
                 st.markdown(response_text)
                 st.session_state.messages.append({"role": "assistant", "content": response_text})
             else:
-                st.error("Tüm API anahtarlarının günlük kotası doldu! Lütfen daha sonra tekrar deneyin.")
+                # Artık gizlemiyoruz, Google'ın verdiği gerçek hatayı ekrana yazdırıyoruz!
+                st.error(f"Gerçek Hata Kodu: {last_error}")
