@@ -48,7 +48,7 @@ prompt = st.chat_input("Yiğit AI'ya bir şey sorun...")
 
 if prompt:
     if not api_keys:
-        st.error("API anahtarı bulunamadı! Lütfen Streamlit Cloud 'Secrets' bölümünü kontrol edin.")
+        st.error("API anahtarı bulunamadı! Lütfen Streamlit Secrets bölümünü kontrol edin.")
     else:
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
@@ -64,9 +64,9 @@ if prompt:
                 try:
                     genai.configure(api_key=key)
                     
-                    # Güncellenmiş tam model yolu
+                    # Güncel ve kararlı model
                     model = genai.GenerativeModel(
-                        model_name="models/gemini-1.5-flash",
+                        model_name="gemini-2.0-flash",
                         system_instruction=PREMIUM_PROMPT
                     )
                     
