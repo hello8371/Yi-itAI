@@ -11,7 +11,7 @@ PREMIUM_PROMPT = (
     "HER ZAMAN sadece Türkçe konuşacaksın."
 )
 
-# API Anahtarlarını Al
+# API Anahtarlarını Otomatik Algıla (5'li Kalkan)
 api_keys = []
 try:
     for key_name, key_value in st.secrets.items():
@@ -23,9 +23,9 @@ except Exception:
 # Sol Panel
 with st.sidebar:
     st.title("🧠 Yiğit AI - Bulut")
-    st.success("☁️ Hata Ayıklama Modu")
+    st.success("☁️ 7/24 Bulut Modu Aktif (Tam Kalkan)")
     st.write("---")
-    st.write(f"Algılanan Anahtar Sayısı: {len(api_keys)}")
+    st.write(f"Aktif Anahtar Sayısı: {len(api_keys)}")
     
     if st.button("🗑️ Sohbeti Sıfırla"):
         st.session_state.messages = []
@@ -48,7 +48,7 @@ prompt = st.chat_input("Yiğit AI'ya bir şey sorun...")
 
 if prompt:
     if not api_keys:
-        st.error("Hiç API anahtarı bulunamadı! Lütfen Streamlit Secrets bölümünü kontrol edin.")
+        st.error("API anahtarı bulunamadı! Lütfen Streamlit Cloud 'Secrets' bölümünü kontrol edin.")
     else:
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
@@ -59,12 +59,14 @@ if prompt:
             success = False
             last_error = ""
             
-            # Anahtarları dener ve gerçek hatayı yakalar
+            # Anahtarları sırayla dener
             for idx, key in enumerate(api_keys):
                 try:
                     genai.configure(api_key=key)
+                    
+                    # Güncellenmiş tam model yolu
                     model = genai.GenerativeModel(
-                        model_name="gemini-1.5-flash",
+                        model_name="models/gemini-1.5-flash",
                         system_instruction=PREMIUM_PROMPT
                     )
                     
@@ -87,5 +89,4 @@ if prompt:
                 st.markdown(response_text)
                 st.session_state.messages.append({"role": "assistant", "content": response_text})
             else:
-                # Artık gizlemiyoruz, Google'ın verdiği gerçek hatayı ekrana yazdırıyoruz!
-                st.error(f"Gerçek Hata Kodu: {last_error}")
+                st.error(f"Hata: {last_error}")
