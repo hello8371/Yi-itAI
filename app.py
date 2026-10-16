@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 import json
-import io
+import base64
 
 # --- SAYFA AYARLARI ---
 st.set_page_config(page_title="Yiğit AI - Gelişmiş Bulut Portalı", page_icon="🧠", layout="wide")
@@ -16,7 +16,7 @@ if "messages" not in st.session_state:
 # --- SOL YAN MENÜ (SIDEBAR & AYARLAR) ---
 with st.sidebar:
     st.title("🧠 Yiğit AI Paneli")
-    st.success("⚡ Dinamik Bulut Modu Aktif")
+    st.success("⚡ Multimodal Görsel Modu Aktif")
     st.write("---")
     
     # 1. MOD SEÇİMİ
@@ -43,10 +43,9 @@ with st.sidebar:
     
     st.write("---")
     
-    # 3. SOHBET GEÇMİŞİ YÖNETİMİ (HER ZAMAN GÖRÜNÜR)
+    # 3. SOHBET GEÇMİŞİ YÖNETİMİ
     st.subheader("📜 Sohbet Yönetimi")
     
-    # a) Eski Sohbeti Yükle
     uploaded_history = st.file_uploader("📥 Eski Sohbeti Yükle (.json)", type=["json"], key="history_upload")
     if uploaded_history is not None:
         try:
@@ -57,7 +56,6 @@ with st.sidebar:
         except Exception as e:
             st.error("Geçersiz dosya.")
 
-    # b) Sohbeti İndir / Yedekle
     json_history = json.dumps(st.session_state.messages, ensure_ascii=False, indent=2)
     st.download_button(
         label="💾 Sohbeti Kaydet/İndir (.json)",
@@ -66,7 +64,6 @@ with st.sidebar:
         mime="application/json"
     )
     
-    # c) Okunabilir Metin Olarak İndir
     txt_history = ""
     for m in st.session_state.messages:
         role_name = "Kullanıcı" if m["role"] == "user" else "Yiğit AI"
@@ -88,48 +85,85 @@ with st.sidebar:
 st.title("🧠 Yiğit AI - Multi-Fonksiyonel Bulut Portalı")
 st.write(f"Aktif Mod: **{ai_mode}** | Toplam Mesaj Sayısı: **{len(st.session_state.messages)}**")
 
-# --- 4. EVRENSEL DOSYA YÜKLEME KÖŞESİ ---
-with st.expander("📁 Dosya Analiz Köşesi (Tüm Dosya Türleri Desteklenir)"):
+# --- 4. EVRENSEL DOSYA VE GÖRSEL YÜKLEME KÖŞESİ ---
+with st.expander("📁 Dosya & Görsel Analiz Köşesi (Görseller Desteklenir)"):
     uploaded_file = st.file_uploader(
-        "Herhangi bir dosya yükleyin (.pdf, .docx, .xlsx, .pptx, .txt, .py, .jpg, .zip, .mp3 vb.)", 
+        "Görsel (.jpg, .png) veya herhangi bir dosya yükleyin", 
         type=None
     )
     file_info = ""
+    image_payload_data = None
+    
     if uploaded_file is not None:
         file_name = uploaded_file.name
         file_size_kb = round(uploaded_file.size / 1024, 2)
+        file_extension = file_name.split('.')[-1].lower()
         
         try:
-            content_bytes = uploaded_file.read()
-            try:
-                decoded_text = content_bytes.decode("utf-8")
-                file_info = f"--- DOSYA ADI: {file_name} (Boyut: {file_size_kb} KB) ---\n--- DOSYA İÇERİĞİ ---\n{decoded_text}"
-            except UnicodeDecodeError:
-                file_info = f"--- DOSYA ADI: {file_name} (İkili/Medya/Arşiv Belgesi) ---\nDosya Tipi: {uploaded_file.type}\nDosya Boyutu: {file_size_kb} KB\nBu ikili bir dosyadır. Lütfen dosya hakkında sorunuzu yöneltin."
+            file_bytes = uploaded_file.read()
             
-            st.success(f"📎 **'{file_name}'** başarıyla yüklendi!")
+            # Eğer yüklenen dosya bir görselse, yapay zekanın görebilmesi için Vision formatına hazırla
+            if file_extension in ["jpg", "jpeg", "png", "webp"]:
+                encoded_image = base64.b64encode(file_bytes).decode('utf-8')
+                mime_type = uploaded_file.type if uploaded_file.type else f"image/{file_extension}"
+                image_payload_data = {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:{mime_type};base64,{encoded_image}"
+                    }
+                }
+                st.image(file_bytes, caption=f"Yüklenen Görsel: {file_name}", width=300)
+                st.success(f"🖼️ **'{file_name}'** görseli başarıyla yüklendi! Artık görsel hakkında soru sorabilirsiniz.")
+            else:
+                # Metin veya diğer belgeler
+                try:
+                    decoded_text = file_bytes.decode("utf-8")
+                    file_info = f"--- DOSYA ADI: {file_name} ---\n{decoded_text}"
+                except UnicodeDecodeError:
+                    file_info = f"--- DOSYA ADI: {file_name} (İkili Belge) ---"
+                st.success(f"📎 **'{file_name}'** yüklendi!")
         except Exception as e:
             st.error(f"Hata: {str(e)}")
 
 # --- MESAJLARI EKRANA YAZDIRMA ---
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+        # Eğer mesaj içerisinde görsel varsa göster
+        if isinstance(message["content"], list):
+            for part in message["content"]:
+                if part.get("type") == "text":
+                    st.markdown(part["text"])
+                elif part.get("type") == "image_url":
+                    st.image(part["image_url"]["url"], width=300)
+        else:
+            st.markdown(message["content"])
 
 # --- KULLANICI GİRDİSİ VE API İSTEĞİ ---
-prompt = st.chat_input("Yiğit AI'ya bir şey sorun...")
+prompt = st.chat_input("Yiğit AI'ya bir şey sorun veya görseli yorumlamasını isteyin...")
 
 if prompt:
     if not api_key:
         st.error("OpenRouter API anahtarı bulunamadı! Lütfen Streamlit Secrets bölümüne 'OPENROUTER_API_KEY' ekleyin.")
     else:
-        full_user_message = prompt
-        if file_info:
-            full_user_message = f"{file_info}\n\n--- KULLANICI SORUSU ---\n{prompt}"
-            file_info = ""
+        # Mesaj içeriğini yapılandır (Görsel varsa OpenAI Vision formatında çoklu parça yap)
+        if image_payload_data:
+            user_content_structure = [
+                {"type": "text", "text": prompt},
+                image_payload_data
+            ]
+            # Hafızaya kaydedilecek yapı
+            st.session_state.messages.append({"role": "user", "content": user_content_structure})
+            image_payload_data = None # Sıfırla
+        else:
+            if file_info:
+                full_prompt = f"{file_info}\n\n--- KULLANICI SORUSU ---\n{prompt}"
+                file_info = ""
+            else:
+                full_prompt = prompt
+            st.session_state.messages.append({"role": "user", "content": full_prompt})
+            user_content_structure = full_prompt
 
-        st.session_state.messages.append({"role": "user", "content": full_user_message})
-        
+        # Ekranda kullanıcı mesajını göster
         with st.chat_message("user"):
             st.markdown(prompt)
             
@@ -139,12 +173,13 @@ if prompt:
                 "Content-Type": "application/json"
             }
             
+            # Sohbet geçmişini OpenAI / OpenRouter standart formatına dönüştür
             api_messages = [{"role": "system", "content": system_prompt}]
             for m in st.session_state.messages:
                 api_messages.append({"role": m["role"], "content": m["content"]})
             
             payload = {
-                "model": "openrouter/free",
+                "model": "meta-llama/llama-3.2-11b-vision-instruct:free",  # Görsel destekli %100 ücretsiz model
                 "messages": api_messages,
                 "temperature": temperature
             }
@@ -154,7 +189,7 @@ if prompt:
                     "https://openrouter.ai/api/v1/chat/completions",
                     headers=headers,
                     json=payload,
-                    timeout=35
+                    timeout=45
                 )
                 
                 if response.status_code == 200:
