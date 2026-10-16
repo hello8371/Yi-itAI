@@ -16,7 +16,7 @@ if "messages" not in st.session_state:
 # --- SOL YAN MENÜ (SIDEBAR & AYARLAR) ---
 with st.sidebar:
     st.title("🧠 Yiğit AI Paneli")
-    st.success("⚡ Akıllı Model Havuzu Aktif")
+    st.success("⚡ Dinamik Bulut Modu Aktif")
     st.write("---")
     
     # 1. MOD SEÇİMİ
@@ -171,12 +171,12 @@ if prompt:
             for m in st.session_state.messages:
                 api_messages.append({"role": m["role"], "content": m["content"]})
             
-            # Ücretsiz ve Kararlı Modeller Listesi (Otomatik Yedekli Sıralama)
+            # Güncel ve Aktif Ücretsiz Yönlendirici ile Modeller Listesi
             free_models = [
-                "google/gemma-2-9b-it:free",
-                "meta-llama/llama-3.1-8b-instruct:free",
-                "qwen/qwen-2.5-7b-instruct:free",
-                "mistralai/mistral-7b-instruct:free"
+                "openrouter/free",
+                "google/gemini-flash-1.5:free",
+                "meta-llama/llama-3.3-70b-instruct:free",
+                "qwen/qwen-2.5-7b-instruct:free"
             ]
             
             success = False
@@ -213,4 +213,4 @@ if prompt:
                 st.markdown(response_text)
                 st.session_state.messages.append({"role": "assistant", "content": response_text})
             else:
-                st.error(f"Tüm ücretsiz modeller şu an yoğun. Lütfen birkaç saniye sonra tekrar deneyin. Detay: {last_error}")
+                st.error(f"Şu an tüm ücretsiz modeller yoğun. Lütfen birkaç saniye sonra tekrar deneyin.")
