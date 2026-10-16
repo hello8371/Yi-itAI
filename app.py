@@ -16,7 +16,7 @@ if "messages" not in st.session_state:
 # --- SOL YAN MENÜ (SIDEBAR & AYARLAR) ---
 with st.sidebar:
     st.title("🧠 Yiğit AI Paneli")
-    st.success("⚡ Gemma Vision & Bulut Modu Aktif")
+    st.success("⚡ Akıllı Model Havuzu Aktif")
     st.write("---")
     
     # 1. MOD SEÇİMİ
@@ -171,26 +171,46 @@ if prompt:
             for m in st.session_state.messages:
                 api_messages.append({"role": m["role"], "content": m["content"]})
             
-            payload = {
-                "model": "google/gemma-4-31b-it:free",  # Güncel aktif ücretsiz multimodal model
-                "messages": api_messages,
-                "temperature": temperature
-            }
+            # Ücretsiz ve Kararlı Modeller Listesi (Otomatik Yedekli Sıralama)
+            free_models = [
+                "google/gemma-2-9b-it:free",
+                "meta-llama/llama-3.1-8b-instruct:free",
+                "qwen/qwen-2.5-7b-instruct:free",
+                "mistralai/mistral-7b-instruct:free"
+            ]
             
-            try:
-                response = requests.post(
-                    "https://openrouter.ai/api/v1/chat/completions",
-                    headers=headers,
-                    json=payload,
-                    timeout=45
-                )
+            success = False
+            response_text = ""
+            last_error = ""
+
+            for model_name in free_models:
+                payload = {
+                    "model": model_name,
+                    "messages": api_messages,
+                    "temperature": temperature
+                }
                 
-                if response.status_code == 200:
-                    result = response.json()
-                    response_text = result["choices"][0]["message"]["content"]
-                    st.markdown(response_text)
-                    st.session_state.messages.append({"role": "assistant", "content": response_text})
-                else:
-                    st.error(f"API Hatası ({response.status_code}): {response.text}")
-            except Exception as e:
-                st.error(f"Bağlantı Hatası: {str(e)}")
+                try:
+                    response = requests.post(
+                        "https://openrouter.ai/api/v1/chat/completions",
+                        headers=headers,
+                        json=payload,
+                        timeout=35
+                    )
+                    
+                    if response.status_code == 200:
+                        result = response.json()
+                        response_text = result["choices"][0]["message"]["content"]
+                        success = True
+                        break
+                    else:
+                        last_error = f"{model_name} -> {response.status_code}: {response.text}"
+                except Exception as e:
+                    last_error = str(e)
+                    continue
+
+            if success and response_text:
+                st.markdown(response_text)
+                st.session_state.messages.append({"role": "assistant", "content": response_text})
+            else:
+                st.error(f"Tüm ücretsiz modeller şu an yoğun. Lütfen birkaç saniye sonra tekrar deneyin. Detay: {last_error}")
