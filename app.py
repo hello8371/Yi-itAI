@@ -19,14 +19,13 @@ with st.sidebar:
     st.success("⚡ Dinamik Bulut Modu Aktif")
     st.write("---")
     
-    # 1. MOD SEÇİMİ (Teknoloji, Müzik, Genel)
+    # 1. MOD SEÇİMİ
     st.subheader("🎯 Çalışma Modu")
     ai_mode = st.selectbox(
         "Uzmanlık Alanı Seçin:",
         ["Genel Asistan", "💻 Teknoloji & Yazılım", "🎵 Müzik & Müzikal Uzman"]
     )
     
-    # Modlara göre sistem talimatları
     base_prompt = "Senin adın Yiğit AI. Sen YİĞİT tarafından geliştirilmiş, 7/24 bulutta çalışan gelişmiş bir yapay zekasın. Seni kimin geliştirdiğini soran herkese HER ZAMAN 'Ben Yiğit tarafından geliştirildim' diyeceksin. HER ZAMAN sadece Türkçe konuşacaksın. "
     
     if ai_mode == "💻 Teknoloji & Yazılım":
@@ -44,35 +43,55 @@ with st.sidebar:
     
     st.write("---")
     
-    # 3. SOHBET GEÇMİŞİ YÖNETİMİ
+    # 3. SOHBET GEÇMİŞİ YÖNETİMİ (HER ZAMAN GÖRÜNÜR)
     st.subheader("📜 Sohbet Yönetimi")
-    if st.button("🗑️ Sohbeti Sıfırla"):
+    
+    # a) Eski Sohbeti Yükle
+    uploaded_history = st.file_uploader("📥 Eski Sohbeti Yükle (.json)", type=["json"], key="history_upload")
+    if uploaded_history is not None:
+        try:
+            loaded_messages = json.load(uploaded_history)
+            st.session_state.messages = loaded_messages
+            st.success("Sohbet geçmişi yüklendi!")
+            st.rerun()
+        except Exception as e:
+            st.error("Geçersiz dosya.")
+
+    # b) Sohbeti İndir / Yedekle
+    json_history = json.dumps(st.session_state.messages, ensure_ascii=False, indent=2)
+    st.download_button(
+        label="💾 Sohbeti Kaydet/İndir (.json)",
+        data=json_history,
+        file_name="yigit_ai_sohbet_yedeği.json",
+        mime="application/json"
+    )
+    
+    # c) Okunabilir Metin Olarak İndir
+    txt_history = ""
+    for m in st.session_state.messages:
+        role_name = "Kullanıcı" if m["role"] == "user" else "Yiğit AI"
+        txt_history += f"{role_name}: {m['content']}\n\n"
+        
+    st.download_button(
+        label="📄 Metin Olarak İndir (.txt)",
+        data=txt_history if txt_history else "Henüz mesaj yok.",
+        file_name="yigit_ai_sohbet_gecmisi.txt",
+        mime="text/plain"
+    )
+    
+    st.write("---")
+    if st.button("🗑️ Sohbeti Temizle"):
         st.session_state.messages = []
         st.rerun()
-        
-    # Sohbet Geçmişini İndirme
-    if st.session_state.messages:
-        chat_history_str = ""
-        for m in st.session_state.messages:
-            role_name = "Kullanıcı" if m["role"] == "user" else "Yiğit AI"
-            chat_history_str += f"{role_name}: {m['content']}\n\n"
-            
-        st.download_button(
-            label="📥 Sohbeti İndir (.txt)",
-            data=chat_history_str,
-            file_name="yigit_ai_sohbet_gecmisi.txt",
-            mime="text/plain"
-        )
 
 # --- ANA EKRAN ---
 st.title("🧠 Yiğit AI - Multi-Fonksiyonel Bulut Portalı")
-st.write(f"Aktif Mod: **{ai_mode}**")
+st.write(f"Aktif Mod: **{ai_mode}** | Toplam Mesaj Sayısı: **{len(st.session_state.messages)}**")
 
-# --- 4. TÜM DOSYA FORMATLARINI DESTEKLEYEN YÜKLEME KÖŞESİ ---
-with st.expander("📁 Evrensel Dosya Yükleyici (Tüm Uzantılar Desteklenir)"):
-    # type=None sayesinde PDF, Word, Excel, PPT, Kod, Resim, Ses, Arşiv vb. TÜM dosya tipleri yüklenebilir.
+# --- 4. EVRENSEL DOSYA YÜKLEME KÖŞESİ ---
+with st.expander("📁 Dosya Analiz Köşesi (Tüm Dosya Türleri Desteklenir)"):
     uploaded_file = st.file_uploader(
-        "Herhangi bir dosya yükleyin (.pdf, .docx, .xlsx, .pptx, .txt, .py, .jpg, .png, .zip, .mp3 vb.)", 
+        "Herhangi bir dosya yükleyin (.pdf, .docx, .xlsx, .pptx, .txt, .py, .jpg, .zip, .mp3 vb.)", 
         type=None
     )
     file_info = ""
@@ -81,18 +100,16 @@ with st.expander("📁 Evrensel Dosya Yükleyici (Tüm Uzantılar Desteklenir)")
         file_size_kb = round(uploaded_file.size / 1024, 2)
         
         try:
-            # Metin tabanlı dosyaları okumayı dene
             content_bytes = uploaded_file.read()
             try:
                 decoded_text = content_bytes.decode("utf-8")
                 file_info = f"--- DOSYA ADI: {file_name} (Boyut: {file_size_kb} KB) ---\n--- DOSYA İÇERİĞİ ---\n{decoded_text}"
             except UnicodeDecodeError:
-                # İkili (Binary) dosyalar için metadatasını ve özetini hazırla
-                file_info = f"--- DOSYA ADI: {file_name} (İkili/Medya/Arşiv Belgesi) ---\nDosya Tipi: {uploaded_file.type}\nDosya Boyutu: {file_size_kb} KB\nBu ikili bir dosyadır (Görsel/Ses/Video/Arşiv/Ofis Belgesi). Lütfen dosya hakkında sorunuzu yöneltin."
+                file_info = f"--- DOSYA ADI: {file_name} (İkili/Medya/Arşiv Belgesi) ---\nDosya Tipi: {uploaded_file.type}\nDosya Boyutu: {file_size_kb} KB\nBu ikili bir dosyadır. Lütfen dosya hakkında sorunuzu yöneltin."
             
-            st.success(f"📎 **'{file_name}'** ({file_size_kb} KB) başarıyla yüklendi! Artık dosya hakkında sorular sorabilirsiniz.")
+            st.success(f"📎 **'{file_name}'** başarıyla yüklendi!")
         except Exception as e:
-            st.error(f"Dosya işlenirken bir hata oluştu: {str(e)}")
+            st.error(f"Hata: {str(e)}")
 
 # --- MESAJLARI EKRANA YAZDIRMA ---
 for message in st.session_state.messages:
@@ -100,21 +117,19 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # --- KULLANICI GİRDİSİ VE API İSTEĞİ ---
-prompt = st.chat_input("Yiğit AI'ya bir şey sorun veya yüklediğiniz dosyayı değerlendirmesini isteyin...")
+prompt = st.chat_input("Yiğit AI'ya bir şey sorun...")
 
 if prompt:
     if not api_key:
         st.error("OpenRouter API anahtarı bulunamadı! Lütfen Streamlit Secrets bölümüne 'OPENROUTER_API_KEY' ekleyin.")
     else:
-        # Eğer dosya yüklenmişse mesaja dosya içeriğini veya bilgisini dahil et
         full_user_message = prompt
         if file_info:
             full_user_message = f"{file_info}\n\n--- KULLANICI SORUSU ---\n{prompt}"
-            file_info = "" # Tekrar tekrar eklenmemesi için sıfırla
+            file_info = ""
 
         st.session_state.messages.append({"role": "user", "content": full_user_message})
         
-        # Ekranda kullanıcının yazdığı sade mesajı göster
         with st.chat_message("user"):
             st.markdown(prompt)
             
@@ -124,7 +139,6 @@ if prompt:
                 "Content-Type": "application/json"
             }
             
-            # Sistem talimatı ve sohbet geçmişi ekleme
             api_messages = [{"role": "system", "content": system_prompt}]
             for m in st.session_state.messages:
                 api_messages.append({"role": m["role"], "content": m["content"]})
@@ -139,7 +153,7 @@ if prompt:
                 response = requests.post(
                     "https://openrouter.ai/api/v1/chat/completions",
                     headers=headers,
-                    json=payload,
+                    json,
                     timeout=35
                 )
                 
@@ -152,3 +166,4 @@ if prompt:
                     st.error(f"API Hatası ({response.status_code}): {response.text}")
             except Exception as e:
                 st.error(f"Bağlantı Hatası: {str(e)}")
+     
