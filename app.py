@@ -17,7 +17,7 @@ api_key = st.secrets.get("OPENROUTER_API_KEY", "")
 # Sol Panel
 with st.sidebar:
     st.title("🧠 Yiğit AI - Bulut")
-    st.success("⚡ OpenRouter Aktif Ücretsiz Modeller")
+    st.success("⚡ Dinamik Ücretsiz Havuz Aktif")
     st.write("---")
     
     if st.button("🗑️ Sohbeti Sıfırla"):
@@ -58,46 +58,26 @@ if prompt:
             for m in st.session_state.messages:
                 api_messages.append({"role": m["role"], "content": m["content"]})
             
-            # Güncel ve Aktif Ücretsiz Modeller (Sırayla Yedekli Denenir)
-            free_models = [
-                "google/gemma-2-9b-it:free",
-                "meta-llama/llama-3.2-11b-vision-instruct:free",
-                "qwen/qwen-2.5-72b-instruct:free",
-                "deepseek/deepseek-r1:free"
-            ]
+            # OpenRouter'ın Otomatik Ücretsiz Model Yönlendiricisi
+            payload = {
+                "model": "openrouter/free",
+                "messages": api_messages
+            }
             
-            success = False
-            response_text = ""
-            last_error = ""
-
-            for model_name in free_models:
-                payload = {
-                    "model": model_name,
-                    "messages": api_messages
-                }
+            try:
+                response = requests.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    headers=headers,
+                    json=payload,
+                    timeout=30
+                )
                 
-                try:
-                    response = requests.post(
-                        "https://openrouter.ai/api/v1/chat/completions",
-                        headers=headers,
-                        json=payload,
-                        timeout=30
-                    )
-                    
-                    if response.status_code == 200:
-                        result = response.json()
-                        response_text = result["choices"][0]["message"]["content"]
-                        success = True
-                        break # Başarılı olursa döngüden çık
-                    else:
-                        last_error = f"{model_name} -> {response.status_code}: {response.text}"
-                except Exception as e:
-                    last_error = str(e)
-                    continue
-
-            if success and response_text:
-                st.markdown(response_text)
-                st.session_state.messages.append({"role": "assistant", "content": response_text})
-            else:
-                st.error(f"Hata Detayı: {last_error}")
-                st.warning("Ücretsiz modeller şu an yanıt vermiyor, lütfen birkaç saniye sonra tekrar deneyin.")
+                if response.status_code == 200:
+                    result = response.json()
+                    response_text = result["choices"][0]["message"]["content"]
+                    st.markdown(response_text)
+                    st.session_state.messages.append({"role": "assistant", "content": response_text})
+                else:
+                    st.error(f"API Hatası ({response.status_code}): {response.text}")
+            except Exception as e:
+                st.error(f"Bağlantı Hatası: {str(e)}")
