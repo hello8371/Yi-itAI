@@ -153,7 +153,7 @@ if prompt:
                 response = requests.post(
                     "https://openrouter.ai/api/v1/chat/completions",
                     headers=headers,
-                    json,
+                    json=payload,
                     timeout=35
                 )
                 
@@ -166,4 +166,3 @@ if prompt:
                     st.error(f"API Hatası ({response.status_code}): {response.text}")
             except Exception as e:
                 st.error(f"Bağlantı Hatası: {str(e)}")
-     
