@@ -1,6 +1,5 @@
 import streamlit as st
-import google.generativeai as genai
-import time
+import requests
 
 # Sayfa Ayarları
 st.set_page_config(page_title="Yiğit AI - 7/24 Bulut Portalı", page_icon="🧠", layout="wide")
@@ -8,25 +7,18 @@ st.set_page_config(page_title="Yiğit AI - 7/24 Bulut Portalı", page_icon="🧠
 # Sistem Talimatı
 PREMIUM_PROMPT = (
     "Senin adın Yiğit AI. Sen YİĞİT tarafından geliştirilmiş, 7/24 bulutta çalışan gelişmiş bir yapay zekasın. "
-    "Seni kimin geliştirdiğini soranHerkese HER ZAMAN 'Ben Yiğit tarafından geliştirildim' diyeceksin. "
+    "Seni kimin geliştirdiğini soran herkese HER ZAMAN 'Ben Yiğit tarafından geliştirildim' diyeceksin. "
     "HER ZAMAN sadece Türkçe konuşacaksın."
 )
 
-# API Anahtarlarını Otomatik Algıla
-api_keys = []
-try:
-    for key_name, key_value in st.secrets.items():
-        if key_name.startswith("GEMINI_API_KEY") and key_value:
-            api_keys.append(key_value)
-except Exception:
-    pass
+# OpenRouter API Anahtarı
+api_key = st.secrets.get("OPENROUTER_API_KEY", "")
 
 # Sol Panel
 with st.sidebar:
     st.title("🧠 Yiğit AI - Bulut")
-    st.success("☁️ 7/24 Bulut Modu Aktif (Tam Kalkan)")
+    st.success("⚡ OpenRouter Sınırsız Mod Active")
     st.write("---")
-    st.write(f"Aktif Anahtar Sayısı: {len(api_keys)}")
     
     if st.button("🗑️ Sohbeti Sıfırla"):
         st.session_state.messages = []
@@ -48,49 +40,46 @@ for message in st.session_state.messages:
 prompt = st.chat_input("Yiğit AI'ya bir şey sorun...")
 
 if prompt:
-    if not api_keys:
-        st.error("API anahtarı bulunamadı! Lütfen Streamlit Secrets bölümünü kontrol edin.")
+    if not api_key:
+        st.error("OpenRouter API anahtarı bulunamadı! Lütfen Streamlit Secrets bölümüne 'OPENROUTER_API_KEY' ekleyin.")
     else:
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
             
         with st.chat_message("assistant"):
-            response_text = None
-            success = False
-            last_error = ""
+            # API İstek Formatı (OpenRouter %100 Ücretsiz Model)
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
             
-            # Anahtarları sırayla dener
-            for idx, key in enumerate(api_keys):
-                try:
-                    genai.configure(api_key=key)
-                    
-                    model = genai.GenerativeModel(
-                        model_name="models/gemini-3.8-flash",
-                        system_instruction=PREMIUM_PROMPT
-                    )
-                    
-                    # Geçmiş sohbeti temiz biçimde oluştur
-                    chat_history = []
-                    for m in st.session_state.messages[:-1]:
-                        role = "user" if m["role"] == "user" else "model"
-                        chat_history.append({"role": role, "parts": [m["content"]]})
-                    
-                    chat = model.start_chat(history=chat_history)
-                    response = chat.send_message(prompt)
-                    
-                    response_text = response.text
-                    success = True
-                    break  # Başarılı olursa döngüyü bitir
-                except Exception as e:
-                    last_error = str(e)
-                    # Anahtarlar arası geçişte Google IP engeline takılmamak için 1 saniye bekle
-                    time.sleep(1)
-                    continue
+            # Sistem talimatı ve geçmiş sohbeti hazırlama
+            api_messages = [{"role": "system", "content": PREMIUM_PROMPT}]
+            for m in st.session_state.messages:
+                api_messages.append({"role": m["role"], "content": m["content"]})
             
-            if success and response_text:
-                st.markdown(response_text)
-                st.session_state.messages.append({"role": "assistant", "content": response_text})
-            else:
-                st.error(f"Hata Detayı: {last_error}")
-                st.warning("Tüm anahtarlar dakikalık limite takıldı. Lütfen 15-20 saniye bekleyip tekrar deneyin.")
+            payload = {
+                "model": "meta-llama/llama-3.3-70b-instruct:free",  # Tamamen ücretsiz ve güçlü model
+                "messages": api_messages
+            }
+            
+            try:
+                response = requests.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    headers=headers,
+                    json=payload,
+                    timeout=30
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    response_text = result["choices"][0]["message"]["content"]
+                    st.markdown(response_text)
+                    st.session_state.messages.append({"role": "assistant", "content": response_text})
+                else:
+                    st.error(f"API Hatası ({response.status_code}): {response.text}")
+            except Exception as e:
+                st.error(f"Bağlantı Hatası: {str(e)}")
+
+        
