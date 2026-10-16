@@ -16,7 +16,7 @@ if "messages" not in st.session_state:
 # --- SOL YAN MENÜ (SIDEBAR & AYARLAR) ---
 with st.sidebar:
     st.title("🧠 Yiğit AI Paneli")
-    st.success("⚡ Gemini Vision & Bulut Modu Aktif")
+    st.success("⚡ Gemma Vision & Bulut Modu Aktif")
     st.write("---")
     
     # 1. MOD SEÇİMİ
@@ -172,7 +172,7 @@ if prompt:
                 api_messages.append({"role": m["role"], "content": m["content"]})
             
             payload = {
-                "model": "google/gemini-flash-1.5:free",  # Kararlı ve ücretsiz Gemini Vision modeli
+                "model": "google/gemma-4-31b-it:free",  # Güncel aktif ücretsiz multimodal model
                 "messages": api_messages,
                 "temperature": temperature
             }
