@@ -16,7 +16,7 @@ if "messages" not in st.session_state:
 # --- SOL YAN MENÜ (SIDEBAR & AYARLAR) ---
 with st.sidebar:
     st.title("🧠 Yiğit AI Paneli")
-    st.success("⚡ Multimodal Görsel Modu Aktif")
+    st.success("⚡ Gemini Vision & Bulut Modu Aktif")
     st.write("---")
     
     # 1. MOD SEÇİMİ
@@ -102,7 +102,6 @@ with st.expander("📁 Dosya & Görsel Analiz Köşesi (Görseller Desteklenir)"
         try:
             file_bytes = uploaded_file.read()
             
-            # Eğer yüklenen dosya bir görselse, yapay zekanın görebilmesi için Vision formatına hazırla
             if file_extension in ["jpg", "jpeg", "png", "webp"]:
                 encoded_image = base64.b64encode(file_bytes).decode('utf-8')
                 mime_type = uploaded_file.type if uploaded_file.type else f"image/{file_extension}"
@@ -113,9 +112,8 @@ with st.expander("📁 Dosya & Görsel Analiz Köşesi (Görseller Desteklenir)"
                     }
                 }
                 st.image(file_bytes, caption=f"Yüklenen Görsel: {file_name}", width=300)
-                st.success(f"🖼️ **'{file_name}'** görseli başarıyla yüklendi! Artık görsel hakkında soru sorabilirsiniz.")
+                st.success(f"🖼️ **'{file_name}'** görseli başarıyla yüklendi!")
             else:
-                # Metin veya diğer belgeler
                 try:
                     decoded_text = file_bytes.decode("utf-8")
                     file_info = f"--- DOSYA ADI: {file_name} ---\n{decoded_text}"
@@ -128,7 +126,6 @@ with st.expander("📁 Dosya & Görsel Analiz Köşesi (Görseller Desteklenir)"
 # --- MESAJLARI EKRANA YAZDIRMA ---
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
-        # Eğer mesaj içerisinde görsel varsa göster
         if isinstance(message["content"], list):
             for part in message["content"]:
                 if part.get("type") == "text":
@@ -139,21 +136,19 @@ for message in st.session_state.messages:
             st.markdown(message["content"])
 
 # --- KULLANICI GİRDİSİ VE API İSTEĞİ ---
-prompt = st.chat_input("Yiğit AI'ya bir şey sorun veya görseli yorumlamasını isteyin...")
+prompt = st.chat_input("Yiğit AI'ya bir şey sorun...")
 
 if prompt:
     if not api_key:
         st.error("OpenRouter API anahtarı bulunamadı! Lütfen Streamlit Secrets bölümüne 'OPENROUTER_API_KEY' ekleyin.")
     else:
-        # Mesaj içeriğini yapılandır (Görsel varsa OpenAI Vision formatında çoklu parça yap)
         if image_payload_data:
             user_content_structure = [
                 {"type": "text", "text": prompt},
                 image_payload_data
             ]
-            # Hafızaya kaydedilecek yapı
             st.session_state.messages.append({"role": "user", "content": user_content_structure})
-            image_payload_data = None # Sıfırla
+            image_payload_data = None
         else:
             if file_info:
                 full_prompt = f"{file_info}\n\n--- KULLANICI SORUSU ---\n{prompt}"
@@ -163,7 +158,6 @@ if prompt:
             st.session_state.messages.append({"role": "user", "content": full_prompt})
             user_content_structure = full_prompt
 
-        # Ekranda kullanıcı mesajını göster
         with st.chat_message("user"):
             st.markdown(prompt)
             
@@ -173,13 +167,12 @@ if prompt:
                 "Content-Type": "application/json"
             }
             
-            # Sohbet geçmişini OpenAI / OpenRouter standart formatına dönüştür
             api_messages = [{"role": "system", "content": system_prompt}]
             for m in st.session_state.messages:
                 api_messages.append({"role": m["role"], "content": m["content"]})
             
             payload = {
-                "model": "meta-llama/llama-3.2-11b-vision-instruct:free",  # Görsel destekli %100 ücretsiz model
+                "model": "google/gemini-flash-1.5:free",  # Kararlı ve ücretsiz Gemini Vision modeli
                 "messages": api_messages,
                 "temperature": temperature
             }
