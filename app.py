@@ -3,6 +3,7 @@ import requests
 import json
 import base64
 import streamlit.components.v1 as components
+import re
 
 # --- SAYFA AYARLARI ---
 st.set_page_config(page_title="Yiğit AI - Gelişmiş Bulut Portalı", page_icon="🧠", layout="wide")
@@ -44,13 +45,7 @@ with st.sidebar:
     
     st.write("---")
     
-    # 3. SESLİ OKUMA SEÇENEĞİ
-    st.subheader("🔊 Ses Ayarları")
-    auto_speak = st.checkbox("Asistan yanıtlarını otomatik sesli oku", value=False)
-
-    st.write("---")
-    
-    # 4. SOHBET GEÇMİŞİ YÖNETİMİ
+    # 3. SOHBET GEÇMİŞİ YÖNETİMİ
     st.subheader("📜 Sohbet Yönetimi")
     
     uploaded_history = st.file_uploader("📥 Eski Sohbeti Yükle (.json)", type=["json"], key="history_upload")
@@ -130,10 +125,9 @@ with st.expander("📁 Dosya & Görsel Analiz Köşesi (Görseller Desteklenir)"
         except Exception as e:
             st.error(f"Hata: {str(e)}")
 
-# --- MESAJLARI EKRANA YAZDIRMA VE SESLİ OKUMA BUTONLARI ---
+# --- MESAJLARI EKRANA YAZDIRMA VE SESLİ OKUMA ---
 for idx, message in enumerate(st.session_state.messages):
     with st.chat_message(message["role"]):
-        # İçerik gösterimi
         content = message["content"]
         if isinstance(content, list):
             for part in content:
@@ -144,13 +138,13 @@ for idx, message in enumerate(st.session_state.messages):
         else:
             st.markdown(content)
             
-        # Eğer mesaj asistana aitse yanına/altına Sesli Dinle butonu ekle
         if message["role"] == "assistant":
-            # Metin içeriğini güvenli hale getir
             text_to_read = content if isinstance(content, str) else "Görsel yanıtı."
-            clean_text = text_to_read.replace('"', '\\"').replace('\n', ' ')
             
-            # Tarayıcı tabanlı sesli okuma tetikleyicisi (JavaScript)
+            # Yıldızları (*), hashtag'leri (#) ve markdown işaretlerini temizleyen Python filtresi
+            clean_text = re.sub(r'[\*#_`~-]', '', text_to_read)
+            clean_text = clean_text.replace('"', '\\"').replace('\n', ' ')
+            
             voice_html = f"""
             <div style="margin-top: 5px;">
                 <button onclick="speakText_{idx}()" style="background-color: #ff4b4b; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px;">
@@ -209,7 +203,6 @@ if prompt:
             
             api_messages = [{"role": "system", "content": system_prompt}]
             for m in st.session_state.messages:
-                # Geçmiş verisini API formatına uygun şekilde işle
                 msg_content = m["content"]
                 api_messages.append({"role": m["role"], "content": msg_content})
             
@@ -253,6 +246,6 @@ if prompt:
             if success and response_text:
                 st.markdown(response_text)
                 st.session_state.messages.append({"role": "assistant", "content": response_text})
-                st.rerun() # Ses butonlarının anında yüklenmesi için sayfayı tazele
+                st.rerun()
             else:
                 st.error(f"Şu an tüm ücretsiz modeller yoğun. Lütfen birkaç saniye sonra tekrar deneyin.")
