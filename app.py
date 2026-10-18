@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import json
 import base64
+import streamlit.components.v1 as components
 
 # --- SAYFA AYARLARI ---
 st.set_page_config(page_title="Yiğit AI - Gelişmiş Bulut Portalı", page_icon="🧠", layout="wide")
@@ -16,7 +17,7 @@ if "messages" not in st.session_state:
 # --- SOL YAN MENÜ (SIDEBAR & AYARLAR) ---
 with st.sidebar:
     st.title("🧠 Yiğit AI Paneli")
-    st.success("⚡ Dinamik Bulut Modu Aktif")
+    st.success("⚡ Sesli Okuma & Bulut Modu Aktif")
     st.write("---")
     
     # 1. MOD SEÇİMİ
@@ -43,7 +44,13 @@ with st.sidebar:
     
     st.write("---")
     
-    # 3. SOHBET GEÇMİŞİ YÖNETİMİ
+    # 3. SESLİ OKUMA SEÇENEĞİ
+    st.subheader("🔊 Ses Ayarları")
+    auto_speak = st.checkbox("Asistan yanıtlarını otomatik sesli oku", value=False)
+
+    st.write("---")
+    
+    # 4. SOHBET GEÇMİŞİ YÖNETİMİ
     st.subheader("📜 Sohbet Yönetimi")
     
     uploaded_history = st.file_uploader("📥 Eski Sohbeti Yükle (.json)", type=["json"], key="history_upload")
@@ -82,7 +89,7 @@ with st.sidebar:
         st.rerun()
 
 # --- ANA EKRAN ---
-st.title("🧠 Yiğit AI - Multi-Fonksiyonel Bulut Portalı")
+st.title("🧠 Yiğit AI - Sesli & Multi-Fonksiyonel Portal")
 st.write(f"Aktif Mod: **{ai_mode}** | Toplam Mesaj Sayısı: **{len(st.session_state.messages)}**")
 
 # --- 4. EVRENSEL DOSYA VE GÖRSEL YÜKLEME KÖŞESİ ---
@@ -123,17 +130,50 @@ with st.expander("📁 Dosya & Görsel Analiz Köşesi (Görseller Desteklenir)"
         except Exception as e:
             st.error(f"Hata: {str(e)}")
 
-# --- MESAJLARI EKRANA YAZDIRMA ---
-for message in st.session_state.messages:
+# --- MESAJLARI EKRANA YAZDIRMA VE SESLİ OKUMA BUTONLARI ---
+for idx, message in enumerate(st.session_state.messages):
     with st.chat_message(message["role"]):
-        if isinstance(message["content"], list):
-            for part in message["content"]:
+        # İçerik gösterimi
+        content = message["content"]
+        if isinstance(content, list):
+            for part in content:
                 if part.get("type") == "text":
                     st.markdown(part["text"])
                 elif part.get("type") == "image_url":
                     st.image(part["image_url"]["url"], width=300)
         else:
-            st.markdown(message["content"])
+            st.markdown(content)
+            
+        # Eğer mesaj asistana aitse yanına/altına Sesli Dinle butonu ekle
+        if message["role"] == "assistant":
+            # Metin içeriğini güvenli hale getir
+            text_to_read = content if isinstance(content, str) else "Görsel yanıtı."
+            clean_text = text_to_read.replace('"', '\\"').replace('\n', ' ')
+            
+            # Tarayıcı tabanlı sesli okuma tetikleyicisi (JavaScript)
+            voice_html = f"""
+            <div style="margin-top: 5px;">
+                <button onclick="speakText_{idx}()" style="background-color: #ff4b4b; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px;">
+                    🔊 Sesli Dinle
+                </button>
+                <button onclick="stopSpeech()" style="background-color: #555; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px; margin-left: 5px;">
+                    ⏹️ Durdur
+                </button>
+            </div>
+            <script>
+                function speakText_{idx}() {{
+                    window.speechSynthesis.cancel();
+                    var utterance = new SpeechSynthesisUtterance("{clean_text}");
+                    utterance.lang = 'tr-TR';
+                    utterance.rate = 1.0;
+                    window.speechSynthesis.speak(utterance);
+                }}
+                function stopSpeech() {{
+                    window.speechSynthesis.cancel();
+                }}
+            </script>
+            """
+            components.html(voice_html, height=50)
 
 # --- KULLANICI GİRDİSİ VE API İSTEĞİ ---
 prompt = st.chat_input("Yiğit AI'ya bir şey sorun...")
@@ -169,9 +209,10 @@ if prompt:
             
             api_messages = [{"role": "system", "content": system_prompt}]
             for m in st.session_state.messages:
-                api_messages.append({"role": m["role"], "content": m["content"]})
+                # Geçmiş verisini API formatına uygun şekilde işle
+                msg_content = m["content"]
+                api_messages.append({"role": m["role"], "content": msg_content})
             
-            # Güncel ve Aktif Ücretsiz Yönlendirici ile Modeller Listesi
             free_models = [
                 "openrouter/free",
                 "google/gemini-flash-1.5:free",
@@ -212,5 +253,6 @@ if prompt:
             if success and response_text:
                 st.markdown(response_text)
                 st.session_state.messages.append({"role": "assistant", "content": response_text})
+                st.rerun() # Ses butonlarının anında yüklenmesi için sayfayı tazele
             else:
                 st.error(f"Şu an tüm ücretsiz modeller yoğun. Lütfen birkaç saniye sonra tekrar deneyin.")
