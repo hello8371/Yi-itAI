@@ -6,34 +6,36 @@ import streamlit.components.v1 as components
 import re
 
 # --- SAYFA AYARLARI ---
-st.set_page_config(page_title="Yiğit AI - Gelişmiş Bulut Portalı", page_icon="🧠", layout="wide")
+st.set_page_config(page_title="Yiğit AI - Google & Maps Destekli Portal", page_icon="🧠", layout="wide")
 
-# --- OPENROUTER API KEY ---
+# --- API KEYS ---
 api_key = st.secrets.get("OPENROUTER_API_KEY", "")
 
-# --- SESSION STATES (OTURUM DURUMLARI) ---
+# --- SESSION STATES ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 # --- SOL YAN MENÜ (SIDEBAR & AYARLAR) ---
 with st.sidebar:
     st.title("🧠 Yiğit AI Paneli")
-    st.success("⚡ Sesli Okuma & Bulut Modu Aktif")
+    st.success("🌍 Google & Maps Modu Aktif")
     st.write("---")
     
     # 1. MOD SEÇİMİ
     st.subheader("🎯 Çalışma Modu")
     ai_mode = st.selectbox(
         "Uzmanlık Alanı Seçin:",
-        ["Genel Asistan", "💻 Teknoloji & Yazılım", "🎵 Müzik & Müzikal Uzman"]
+        ["Genel Asistan", "🌍 Google Arama & Haritalar Uzmanı", "💻 Teknoloji & Yazılım", "🎵 Müzik & Müzikal Uzman"]
     )
     
     base_prompt = "Senin adın Yiğit AI. Sen YİĞİT tarafından geliştirilmiş, 7/24 bulutta çalışan gelişmiş bir yapay zekasın. Seni kimin geliştirdiğini soran herkese HER ZAMAN 'Ben Yiğit tarafından geliştirildim' diyeceksin. HER ZAMAN sadece Türkçe konuşacaksın. "
     
-    if ai_mode == "💻 Teknoloji & Yazılım":
-        system_prompt = base_prompt + "Şu an Teknoloji ve Yazılım Modundasın. Donanım, yazılım, kodlama, işletim sistemleri ve teknoloji konularında derinlemesine teknik bilgi ver."
+    if ai_mode == "🌍 Google Arama & Haritalar Uzmanı":
+        system_prompt = base_prompt + "Şu an Google Arama ve Haritalar Modundasın. Kullanıcıya güncel internet bilgileri, yol tarifleri, mekanlar, coğrafi konumlar ve Google Maps verileri hakkında detaylı, güncel ve rehber niteliğinde bilgiler ver."
+    elif ai_mode == "💻 Teknoloji & Yazılım":
+        system_prompt = base_prompt + "Şu an Teknoloji ve Yazılım Modundasın. Donanım, yazılım, kodlama ve teknoloji konularında derinlemesine teknik bilgi ver."
     elif ai_mode == "🎵 Müzik & Müzikal Uzman":
-        system_prompt = base_prompt + "Şu an Müzik Modundasın. Şarkı sözü yazımı, beste yapıları, müzik tarzları ve enstrümanlar konusunda uzman bir müzik prodüktörü gibi yanıtlar ver."
+        system_prompt = base_prompt + "Şu an Müzik Modundasın. Şarkı sözü yazımı, beste yapıları ve müzik tarzları konusunda uzman bir prodüktör gibi yanıtlar ver."
     else:
         system_prompt = base_prompt + "Kullanıcıya her konuda yardımcı olan samimi ve zeki bir asistansın."
 
@@ -42,7 +44,7 @@ with st.sidebar:
     # 2. SOHBET AYARLARI
     st.subheader("⚙️ Yanıt Ayarları")
     temperature = st.slider("Yaratıcılık / Esneklik:", min_value=0.1, max_value=1.0, value=0.7, step=0.1)
-    
+
     st.write("---")
     
     # 3. SOHBET GEÇMİŞİ YÖNETİMİ
@@ -84,7 +86,7 @@ with st.sidebar:
         st.rerun()
 
 # --- ANA EKRAN ---
-st.title("🧠 Yiğit AI - Sesli & Multi-Fonksiyonel Portal")
+st.title("🧠 Yiğit AI - Google & Maps Entegreli Portal")
 st.write(f"Aktif Mod: **{ai_mode}** | Toplam Mesaj Sayısı: **{len(st.session_state.messages)}**")
 
 # --- 4. EVRENSEL DOSYA VE GÖRSEL YÜKLEME KÖŞESİ ---
@@ -140,8 +142,6 @@ for idx, message in enumerate(st.session_state.messages):
             
         if message["role"] == "assistant":
             text_to_read = content if isinstance(content, str) else "Görsel yanıtı."
-            
-            # Yıldızları (*), hashtag'leri (#) ve markdown işaretlerini temizleyen Python filtresi
             clean_text = re.sub(r'[\*#_`~-]', '', text_to_read)
             clean_text = clean_text.replace('"', '\\"').replace('\n', ' ')
             
@@ -170,27 +170,32 @@ for idx, message in enumerate(st.session_state.messages):
             components.html(voice_html, height=50)
 
 # --- KULLANICI GİRDİSİ VE API İSTEĞİ ---
-prompt = st.chat_input("Yiğit AI'ya bir şey sorun...")
+prompt = st.chat_input("Google'da ara, konum bul veya Yiğit AI'ya sor...")
 
 if prompt:
     if not api_key:
         st.error("OpenRouter API anahtarı bulunamadı! Lütfen Streamlit Secrets bölümüne 'OPENROUTER_API_KEY' ekleyin.")
     else:
+        # Eğer Google Arama modu seçildiyse prompt'a internetten arama yapma talimatı ekle
+        if ai_mode == "🌍 Google Arama & Haritalar Uzmanı":
+            enhanced_prompt = f"[Google Arama & Maps Modu Aktif: Lütfen kullanıcıya güncel internet verileri, yerler, adresler veya harita bilgileri doğrultusunda detaylı yanıt ver]\n\nSoru: {prompt}"
+        else:
+            enhanced_prompt = prompt
+
         if image_payload_data:
             user_content_structure = [
-                {"type": "text", "text": prompt},
+                {"type": "text", "text": enhanced_prompt},
                 image_payload_data
             ]
             st.session_state.messages.append({"role": "user", "content": user_content_structure})
             image_payload_data = None
         else:
             if file_info:
-                full_prompt = f"{file_info}\n\n--- KULLANICI SORUSU ---\n{prompt}"
+                full_prompt = f"{file_info}\n\n--- KULLANICI SORUSU ---\n{enhanced_prompt}"
                 file_info = ""
             else:
-                full_prompt = prompt
+                full_prompt = enhanced_prompt
             st.session_state.messages.append({"role": "user", "content": full_prompt})
-            user_content_structure = full_prompt
 
         with st.chat_message("user"):
             st.markdown(prompt)
@@ -203,12 +208,12 @@ if prompt:
             
             api_messages = [{"role": "system", "content": system_prompt}]
             for m in st.session_state.messages:
-                msg_content = m["content"]
-                api_messages.append({"role": m["role"], "content": msg_content})
+                api_messages.append({"role": m["role"], "content": m["content"]})
             
+            # Google web arama yeteneklerini destekleyen güncel modeller
             free_models = [
-                "openrouter/free",
                 "google/gemini-flash-1.5:free",
+                "openrouter/free",
                 "meta-llama/llama-3.3-70b-instruct:free",
                 "qwen/qwen-2.5-7b-instruct:free"
             ]
@@ -227,11 +232,11 @@ if prompt:
                 try:
                     response = requests.post(
                         "https://openrouter.ai/api/v1/chat/completions",
-                        headers=headers,
-                        json=payload,
-                        timeout=35
-                    )
-                    
+                    headers=headers,
+                    json=payload,
+                    timeout=35
+                )
+                
                     if response.status_code == 200:
                         result = response.json()
                         response_text = result["choices"][0]["message"]["content"]
@@ -248,4 +253,4 @@ if prompt:
                 st.session_state.messages.append({"role": "assistant", "content": response_text})
                 st.rerun()
             else:
-                st.error(f"Şu an tüm ücretsiz modeller yoğun. Lütfen birkaç saniye sonra tekrar deneyin.")
+                st.error(f"Şu an tüm modeller yoğun. Lütfen birkaç saniye sonra tekrar deneyin.")
