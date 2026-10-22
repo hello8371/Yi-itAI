@@ -7,7 +7,7 @@ import re
 import urllib.parse
 
 # --- SAYFA AYARLARI ---
-st.set_page_config(page_title="Yiğit AI - Görsel Üretme & Bulut Portalı", page_icon="🧠", layout="wide")
+st.set_page_config(page_title="Yiğit AI - PREMİUM SÜRÜM", page_icon="🧠", layout="wide")
 
 # --- API KEYS ---
 api_key = st.secrets.get("OPENROUTER_API_KEY", "")
@@ -19,7 +19,7 @@ if "messages" not in st.session_state:
 # --- SOL YAN MENÜ (SIDEBAR & AYARLAR) ---
 with st.sidebar:
     st.title("🧠 Yiğit AI Paneli")
-    st.success("🎨 Görsel Üretim & Bulut Modu Aktif")
+    st.success("🎨 YİĞİT Aİ PANEL")
     st.write("---")
     
     # 1. MOD SEÇİMİ
