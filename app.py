@@ -4,9 +4,10 @@ import json
 import base64
 import streamlit.components.v1 as components
 import re
+import urllib.parse
 
 # --- SAYFA AYARLARI ---
-st.set_page_config(page_title="Yiğit AI - Google & Maps Destekli Portal", page_icon="🧠", layout="wide")
+st.set_page_config(page_title="Yiğit AI - Görsel Üretme & Bulut Portalı", page_icon="🧠", layout="wide")
 
 # --- API KEYS ---
 api_key = st.secrets.get("OPENROUTER_API_KEY", "")
@@ -18,24 +19,27 @@ if "messages" not in st.session_state:
 # --- SOL YAN MENÜ (SIDEBAR & AYARLAR) ---
 with st.sidebar:
     st.title("🧠 Yiğit AI Paneli")
-    st.success("🌍 Yiğit AI PREMİUM")
+    st.success("🎨 Görsel Üretim & Bulut Modu Aktif")
     st.write("---")
     
     # 1. MOD SEÇİMİ
     st.subheader("🎯 Çalışma Modu")
     ai_mode = st.selectbox(
         "Uzmanlık Alanı Seçin:",
-        ["Genel Asistan", "🌍 Google Arama & Haritalar", "💻 Teknoloji & Yazılım", "🎵 Müzik & Müzikal Uzman"]
+        ["Genel Asistan", "🎨 Görsel Tasarım & Çizim Uzmanı", "🌍 Google Arama & Haritalar", "💻 Teknoloji & Yazılım", "🎵 Müzik Uzmanı"]
     )
     
     base_prompt = "Senin adın yiğit Aİ premium her zaman  Türkçe konuşulduğunda türkçe İngilizce konuşulduğunda İngilizce cevap vereceksin sadece seni kim yaptı diye soranlar için ben yiğit tarafından geliştirilmiş diyeceksin."
     
-    if ai_mode == "🌍 YİĞİT AI PREMİUM":
-        system_prompt = base_prompt + "Şu an Google Arama ve Haritalar Modundasın. Kullanıcıya güncel internet bilgileri, yol tarifleri, mekanlar, coğrafi konumlar ve Google Maps verileri hakkında detaylı, güncel ve rehber niteliğinde bilgiler ver."
+    
+    if ai_mode == "🎨 Görsel Tasarım & Çizim Uzmanı":
+        system_prompt = base_prompt + "Şu an Görsel Tasarım ve Çizim Modundasın. Kullanıcı senden bir görsel veya resim çizmeni istediğinde, hem detaylı bir tasvir yap hem de İngilizce görsel ipuçları (prompt) öner."
+    elif ai_mode == "🌍 Google Arama & Haritalar":
+        system_prompt = base_prompt + "Şu an Google Arama ve Haritalar Modundasın. Kullanıcıya güncel internet bilgileri, adresler ve harita verileri hakkında rehberlik et."
     elif ai_mode == "💻 Teknoloji & Yazılım":
-        system_prompt = base_prompt + "Şu an Teknoloji ve Yazılım Modundasın. Donanım, yazılım, kodlama ve teknoloji konularında derinlemesine teknik bilgi ver."
-    elif ai_mode == "🎵 Müzik & Müzikal Uzman":
-        system_prompt = base_prompt + "Şu an Müzik Modundasın. Şarkı sözü yazımı, beste yapıları ve müzik tarzları konusunda uzman bir prodüktör gibi yanıtlar ver."
+        system_prompt = base_prompt + "Şu an Teknoloji ve Yazılım Modundasın. Donanım, yazılım ve kodlama konularında derinlemesine teknik bilgi ver."
+    elif ai_mode == "🎵 Müzik Uzmanı":
+        system_prompt = base_prompt + "Şu an Müzik Modundasın. Şarkı sözü ve beste konularında uzman bir prodüktör gibi yanıtlar ver."
     else:
         system_prompt = base_prompt + "Kullanıcıya her konuda yardımcı olan samimi ve zeki bir asistansın."
 
@@ -86,7 +90,7 @@ with st.sidebar:
         st.rerun()
 
 # --- ANA EKRAN ---
-st.title("🧠 Yiğit AI - PREMİUM SÜRÜM")
+st.title("🧠 Yiğit AI - Görsel Üreten Akıllı Portal")
 st.write(f"Aktif Mod: **{ai_mode}** | Toplam Mesaj Sayısı: **{len(st.session_state.messages)}**")
 
 # --- 4. EVRENSEL DOSYA VE GÖRSEL YÜKLEME KÖŞESİ ---
@@ -140,8 +144,13 @@ for idx, message in enumerate(st.session_state.messages):
         else:
             st.markdown(content)
             
-        if message["role"] == "assistant":
-            text_to_read = content if isinstance(content, str) else "Görsel yanıtı."
+        # Eğer mesajda üretilmiş bir görsel varsa göster
+        if isinstance(content, dict) and "generated_image" in content:
+            st.image(content["generated_image"], caption="Yiğit AI Tarafından Üretildi", width=400)
+            st.markdown(content["text"])
+            
+        if message["role"] == "assistant" and isinstance(content, str):
+            text_to_read = content
             clean_text = re.sub(r'[\*#_`~-]', '', text_to_read)
             clean_text = clean_text.replace('"', '\\"').replace('\n', ' ')
             
@@ -170,15 +179,17 @@ for idx, message in enumerate(st.session_state.messages):
             components.html(voice_html, height=50)
 
 # --- KULLANICI GİRDİSİ VE API İSTEĞİ ---
-prompt = st.chat_input("Google'da ara, konum bul veya Yiğit AI'ya sor...")
+prompt = st.chat_input("Yiğit AI'ya bir şey sorun veya görsel çizmesini isteyin...")
 
 if prompt:
     if not api_key:
         st.error("OpenRouter API anahtarı bulunamadı! Lütfen Streamlit Secrets bölümüne 'OPENROUTER_API_KEY' ekleyin.")
     else:
-        # Eğer Google Arama modu seçildiyse prompt'a internetten arama yapma talimatı ekle
-        if ai_mode == "🌍 Google Arama & Haritalar Uzmanı":
-            enhanced_prompt = f"[Google Arama & Maps Modu Aktif: Lütfen kullanıcıya güncel internet verileri, yerler, adresler veya harita bilgileri doğrultusunda detaylı yanıt ver]\n\nSoru: {prompt}"
+        # Görsel üretme isteği algılama (çiz, oluştur, resim yap, görsel yap vb.)
+        is_image_request = any(keyword in prompt.lower() for keyword in ["çiz", "oluştur", "resim yap", "görsel yap", "tasarla", "draw", "generate image"])
+        
+        if ai_mode == "🎨 Görsel Tasarım & Çizim Uzmanı" or is_image_request:
+            enhanced_prompt = f"[Görsel Çizim İsteği Algılandı]: Kullanıcı şu görselin oluşturulmasını istiyor: '{prompt}'. Lütfen bu isteğe hem yaratıcı bir metinle yanıt ver hem de görselin ne anlama geldiğini açıkla."
         else:
             enhanced_prompt = prompt
 
@@ -208,12 +219,17 @@ if prompt:
             
             api_messages = [{"role": "system", "content": system_prompt}]
             for m in st.session_state.messages:
-                api_messages.append({"role": m["role"], "content": m["content"]})
+                m_content = m["content"]
+                if isinstance(m_content, dict) and "text" in m_content:
+                    api_messages.append({"role": m["role"], "content": m_content["text"]})
+                elif isinstance(m_content, str):
+                    api_messages.append({"role": m["role"], "content": m_content})
+                elif isinstance(m_content, list):
+                    api_messages.append({"role": m["role"], "content": m_content})
             
-            # Google web arama yeteneklerini destekleyen güncel modeller
             free_models = [
-                "google/gemini-flash-1.5:free",
                 "openrouter/free",
+                "google/gemini-flash-1.5:free",
                 "meta-llama/llama-3.3-70b-instruct:free",
                 "qwen/qwen-2.5-7b-instruct:free"
             ]
@@ -228,29 +244,8 @@ if prompt:
                     "messages": api_messages,
                     "temperature": temperature
                 }
-                
-                try:
-                    response = requests.post(
-                        "https://openrouter.ai/api/v1/chat/completions",
-                    headers=headers,
-                    json=payload,
-                    timeout=35
-                )
-                
-                    if response.status_code == 200:
-                        result = response.json()
-                        response_text = result["choices"][0]["message"]["content"]
-                        success = True
-                        break
-                    else:
-                        last_error = f"{model_name} -> {response.status_code}: {response.text}"
-                except Exception as e:
-                    last_error = str(e)
-                    continue
 
-            if success and response_text:
-                st.markdown(response_text)
-                st.session_state.messages.append({"role": "assistant", "content": response_text})
-                st.rerun()
-            else:
-                st.error(f"Şu an tüm modeller yoğun. Lütfen birkaç saniye sonra tekrar deneyin.")
+        
+    
+    
+                
