@@ -19,7 +19,7 @@ if "messages" not in st.session_state:
 # --- SOL YAN MENÜ (SIDEBAR & SEÇENEKLER) ---
 with st.sidebar:
     st.title("YİĞİT AI SEÇENEKLER")
-    st.success("⚡ Premium Mod Aktif")
+    st.success("⚡ Hızlı Llama Modu Aktif")
     st.write("---")
     
     # 1. MOD SEÇİMİ
@@ -237,10 +237,11 @@ if prompt:
                 elif isinstance(m_content, list):
                     api_messages.append({"role": m["role"], "content": m_content})
             
+            # Llama ve hızlı modelleri en başa aldık
             free_models = [
-                "openrouter/free",
-                "google/gemini-flash-1.5:free",
                 "meta-llama/llama-3.3-70b-instruct:free",
+                "google/gemini-flash-1.5:free",
+                "openrouter/free",
                 "qwen/qwen-2.5-7b-instruct:free"
             ]
             
@@ -260,7 +261,7 @@ if prompt:
                         "https://openrouter.ai/api/v1/chat/completions",
                         headers=headers,
                         json=payload,
-                        timeout=35
+                        timeout=30
                     )
                     
                     if response.status_code == 200:
@@ -295,6 +296,8 @@ if prompt:
                     st.session_state.messages.append({"role": "assistant", "content": response_text})
             else:
                 st.error(f"Şu an tüm modeller yoğun. Lütfen birkaç saniye sonra tekrar deneyin.")
+
+      
 
                    
 
