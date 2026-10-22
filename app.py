@@ -30,7 +30,7 @@ with st.sidebar:
     )
     
     # Base Prompt
-    base_prompt = "Senin adın yiğit Aİ premium. Her zaman sadece Türkçe konuşacaksın. Seni kimin geliştirdiğini soran herkese HER ZAMAN 'Ben Yiğit tarafından geliştirildim' diyeceksin. "
+    base_prompt = "Senin adın yiğit Aİ premium. Her zaman Türkçe konuşulduğunda Türkçe, İngilizce konuşulduğunda İngilizce cevap vereceksin. Seni kimin geliştirdiğini soran herkese HER ZAMAN 'Ben Yiğit tarafından geliştirildim' diyeceksin. "
     
     if ai_mode == "🎨 Görsel Tasarım & Çizim Uzmanı":
         system_prompt = base_prompt + "Şu an Görsel Tasarım ve Çizim Modundasın. Kullanıcı senden bir görsel çizmeni istediğinde detaylı tasvir yap ve çizim öner."
@@ -75,7 +75,14 @@ with st.sidebar:
     txt_history = ""
     for m in st.session_state.messages:
         role_name = "Kullanıcı" if m["role"] == "user" else "Yiğit AI"
-        txt_history += f"{role_name}: {m['content']}\n\n"
+        content_val = m['content']
+        if isinstance(content_val, dict):
+            content_text = content_val.get("text", "")
+        elif isinstance(content_val, list):
+            content_text = " ".join([p.get("text", "") for p in content_val if isinstance(p, dict)])
+        else:
+            content_text = str(content_val)
+        txt_history += f"{role_name}: {content_text}\n\n"
         
     st.download_button(
         label="📄 Metin Olarak İndir (.txt)",
@@ -138,15 +145,20 @@ for idx, message in enumerate(st.session_state.messages):
                     st.markdown(part["text"])
                 elif part.get("type") == "image_url":
                     st.image(part["image_url"]["url"], width=300)
+        elif isinstance(content, dict) and "generated_image" in content:
+            st.image(content["generated_image"], caption="Yiğit AI Tarafından Üretildi", width=400)
+            st.markdown(content["text"])
         else:
             st.markdown(content)
             
-        if isinstance(content, dict) and "generated_image" in content:
-            st.image(content["generated_image"], caption="Yiğit AI Tarafından Üretildi", width=400)
-            st.markdown(content["text"])
-            
-        if message["role"] == "assistant" and isinstance(content, str):
-            text_to_read = content
+        if message["role"] == "assistant":
+            if isinstance(content, dict):
+                text_to_read = content.get("text", "Görsel yanıtı.")
+            elif isinstance(content, str):
+                text_to_read = content
+            else:
+                text_to_read = "Yanıt."
+                
             clean_text = re.sub(r'[\*#_`~-]', '', text_to_read)
             clean_text = clean_text.replace('"', '\\"').replace("'", "\\'").replace('\n', ' ')
             
@@ -281,10 +293,10 @@ if prompt:
                 else:
                     st.markdown(response_text)
                     st.session_state.messages.append({"role": "assistant", "content": response_text})
-                
-                st.rerun()
             else:
                 st.error(f"Şu an tüm modeller yoğun. Lütfen birkaç saniye sonra tekrar deneyin.")
+
+                   
 
      
         
