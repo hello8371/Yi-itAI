@@ -29,7 +29,7 @@ with st.sidebar:
         ["Genel Asistan", "🎨 Görsel Tasarım & Çizim Uzmanı", "🌍 Google Arama & Haritalar", "💻 Teknoloji & Yazılım", "🎵 Müzik Uzmanı"]
     )
     
-    # Yeni İstediğin Base Prompt
+    # Base Prompt
     base_prompt = "Senin adın yiğit Aİ premium. Her zaman Türkçe konuşulduğunda Türkçe, İngilizce konuşulduğunda İngilizce cevap vereceksin. Seni kimin geliştirdiğini soran herkese HER ZAMAN 'Ben Yiğit tarafından geliştirildim' diyeceksin. "
     
     if ai_mode == "🎨 Görsel Tasarım & Çizim Uzmanı":
@@ -97,65 +97,4 @@ st.write(f"Aktif Mod: **{ai_mode}** | Toplam Mesaj Sayısı: **{len(st.session_s
 with st.expander("📁 Dosya & Görsel Analiz Köşesi (Görseller Desteklenir)"):
     uploaded_file = st.file_uploader(
         "Görsel (.jpg, .png) veya herhangi bir dosya yükleyin", 
-        type=None
-    )
-    file_info = ""
-    image_payload_data = None
-    
-    if uploaded_file is not None:
-        file_name = uploaded_file.name
-        file_size_kb = round(uploaded_file.size / 1024, 2)
-        file_extension = file_name.split('.')[-1].lower()
         
-        try:
-            file_bytes = uploaded_file.read()
-            
-            if file_extension in ["jpg", "jpeg", "png", "webp"]:
-                encoded_image = base64.b64encode(file_bytes).decode('utf-8')
-                mime_type = uploaded_file.type if uploaded_file.type else f"image/{file_extension}"
-                image_payload_data = {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": f"data:{mime_type};base64,{encoded_image}"
-                    }
-                }
-                st.image(file_bytes, caption=f"Yüklenen Görsel: {file_name}", width=300)
-                st.success(f"🖼️ **'{file_name}'** görseli başarıyla yüklendi!")
-            else:
-                try:
-                    decoded_text = file_bytes.decode("utf-8")
-                    file_info = f"--- DOSYA ADI: {file_name} ---\n{decoded_text}"
-                except UnicodeDecodeError:
-                    file_info = f"--- DOSYA ADI: {file_name} (İkili Belge) ---"
-                st.success(f"📎 **'{file_name}'** yüklendi!")
-        except Exception as e:
-            st.error(f"Hata: {str(e)}")
-
-# --- MESAJLARI EKRANA YAZDIRMA VE SESLİ OKUMA ---
-for idx, message in enumerate(st.session_state.messages):
-    with st.chat_message(message["role"]):
-        content = message["content"]
-        if isinstance(content, list):
-            for part in content:
-                if part.get("type") == "text":
-                    st.markdown(part["text"])
-                elif part.get("type") == "image_url":
-                    st.image(part["image_url"]["url"], width=300)
-        else:
-            st.markdown(content)
-            
-        if isinstance(content, dict) and "generated_image" in content:
-            st.image(content["generated_image"], caption="Yiğit AI Tarafından Üretildi", width=400)
-            st.markdown(content["text"])
-            
-        if message["role"] == "assistant" and isinstance(content, str):
-            text_to_read = content
-            clean_text = re.sub(r'[\*#_`~-]', '', text_to_read)
-            clean_text = clean_text.replace('"', '\\"').replace('\n', ' ')
-            
-            voice_html = f"""
-            <div style="margin-top: 5px;">
-                <button onclick="speakText_{idx}()" style="background-color: #ff4b4b; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px;">
-                    🔊 Sesli Dinle
-                </button>
-                <button onclick="stopSpeech()" style="background-color: #555; color: white;
