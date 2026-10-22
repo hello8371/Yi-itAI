@@ -7,7 +7,7 @@ import re
 import urllib.parse
 
 # --- SAYFA AYARLARI ---
-st.set_page_config(page_title="Yiğit AI - PREMİUM SÜRÜM", page_icon="🧠", layout="wide")
+st.set_page_config(page_title="Yiğit AI - Premium Sürüm", page_icon="🧠", layout="wide")
 
 # --- API KEYS ---
 api_key = st.secrets.get("OPENROUTER_API_KEY", "")
@@ -16,10 +16,10 @@ api_key = st.secrets.get("OPENROUTER_API_KEY", "")
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# --- SOL YAN MENÜ (SIDEBAR & AYARLAR) ---
+# --- SOL YAN MENÜ (SIDEBAR & SEÇENEKLER) ---
 with st.sidebar:
-    st.title("🧠 Yiğit AI Paneli")
-    st.success("🎨 YİĞİT Aİ PANEL")
+    st.title("YİĞİT AI SEÇENEKLER")
+    st.success("⚡ Premium Mod Aktif")
     st.write("---")
     
     # 1. MOD SEÇİMİ
@@ -29,15 +29,15 @@ with st.sidebar:
         ["Genel Asistan", "🎨 Görsel Tasarım & Çizim Uzmanı", "🌍 Google Arama & Haritalar", "💻 Teknoloji & Yazılım", "🎵 Müzik Uzmanı"]
     )
     
-    base_prompt = "Senin adın yiğit Aİ premium her zaman  Türkçe konuşulduğunda türkçe İngilizce konuşulduğunda İngilizce cevap vereceksin sadece seni kim yaptı diye soranlar için ben yiğit tarafından geliştirilmiş diyeceksin."
-    
+    # Yeni İstediğin Base Prompt
+    base_prompt = "Senin adın yiğit Aİ premium. Her zaman Türkçe konuşulduğunda Türkçe, İngilizce konuşulduğunda İngilizce cevap vereceksin. Seni kimin geliştirdiğini soran herkese HER ZAMAN 'Ben Yiğit tarafından geliştirildim' diyeceksin. "
     
     if ai_mode == "🎨 Görsel Tasarım & Çizim Uzmanı":
-        system_prompt = base_prompt + "Şu an Görsel Tasarım ve Çizim Modundasın. Kullanıcı senden bir görsel veya resim çizmeni istediğinde, hem detaylı bir tasvir yap hem de İngilizce görsel ipuçları (prompt) öner."
+        system_prompt = base_prompt + "Şu an Görsel Tasarım ve Çizim Modundasın. Kullanıcı senden bir görsel çizmeni istediğinde detaylı tasvir yap ve çizim öner."
     elif ai_mode == "🌍 Google Arama & Haritalar":
         system_prompt = base_prompt + "Şu an Google Arama ve Haritalar Modundasın. Kullanıcıya güncel internet bilgileri, adresler ve harita verileri hakkında rehberlik et."
     elif ai_mode == "💻 Teknoloji & Yazılım":
-        system_prompt = base_prompt + "Şu an Teknoloji ve Yazılım Modundasın. Donanım, yazılım ve kodlama konularında derinlemesine teknik bilgi ver."
+        system_prompt = base_prompt + "Şu an Teknoloji ve Yazılım Modundasın. Donanım, yazılım ve kodlama konularında teknik bilgi ver."
     elif ai_mode == "🎵 Müzik Uzmanı":
         system_prompt = base_prompt + "Şu an Müzik Modundasın. Şarkı sözü ve beste konularında uzman bir prodüktör gibi yanıtlar ver."
     else:
@@ -90,7 +90,7 @@ with st.sidebar:
         st.rerun()
 
 # --- ANA EKRAN ---
-st.title("🧠 Yiğit AI - Görsel Üreten Akıllı Portal")
+st.title("🧠 Yiğit AI - Premium Portal")
 st.write(f"Aktif Mod: **{ai_mode}** | Toplam Mesaj Sayısı: **{len(st.session_state.messages)}**")
 
 # --- 4. EVRENSEL DOSYA VE GÖRSEL YÜKLEME KÖŞESİ ---
@@ -144,7 +144,6 @@ for idx, message in enumerate(st.session_state.messages):
         else:
             st.markdown(content)
             
-        # Eğer mesajda üretilmiş bir görsel varsa göster
         if isinstance(content, dict) and "generated_image" in content:
             st.image(content["generated_image"], caption="Yiğit AI Tarafından Üretildi", width=400)
             st.markdown(content["text"])
@@ -159,93 +158,4 @@ for idx, message in enumerate(st.session_state.messages):
                 <button onclick="speakText_{idx}()" style="background-color: #ff4b4b; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px;">
                     🔊 Sesli Dinle
                 </button>
-                <button onclick="stopSpeech()" style="background-color: #555; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px; margin-left: 5px;">
-                    ⏹️ Durdur
-                </button>
-            </div>
-            <script>
-                function speakText_{idx}() {{
-                    window.speechSynthesis.cancel();
-                    var utterance = new SpeechSynthesisUtterance("{clean_text}");
-                    utterance.lang = 'tr-TR';
-                    utterance.rate = 1.0;
-                    window.speechSynthesis.speak(utterance);
-                }}
-                function stopSpeech() {{
-                    window.speechSynthesis.cancel();
-                }}
-            </script>
-            """
-            components.html(voice_html, height=50)
-
-# --- KULLANICI GİRDİSİ VE API İSTEĞİ ---
-prompt = st.chat_input("Yiğit AI'ya bir şey sorun veya görsel çizmesini isteyin...")
-
-if prompt:
-    if not api_key:
-        st.error("OpenRouter API anahtarı bulunamadı! Lütfen Streamlit Secrets bölümüne 'OPENROUTER_API_KEY' ekleyin.")
-    else:
-        # Görsel üretme isteği algılama (çiz, oluştur, resim yap, görsel yap vb.)
-        is_image_request = any(keyword in prompt.lower() for keyword in ["çiz", "oluştur", "resim yap", "görsel yap", "tasarla", "draw", "generate image"])
-        
-        if ai_mode == "🎨 Görsel Tasarım & Çizim Uzmanı" or is_image_request:
-            enhanced_prompt = f"[Görsel Çizim İsteği Algılandı]: Kullanıcı şu görselin oluşturulmasını istiyor: '{prompt}'. Lütfen bu isteğe hem yaratıcı bir metinle yanıt ver hem de görselin ne anlama geldiğini açıkla."
-        else:
-            enhanced_prompt = prompt
-
-        if image_payload_data:
-            user_content_structure = [
-                {"type": "text", "text": enhanced_prompt},
-                image_payload_data
-            ]
-            st.session_state.messages.append({"role": "user", "content": user_content_structure})
-            image_payload_data = None
-        else:
-            if file_info:
-                full_prompt = f"{file_info}\n\n--- KULLANICI SORUSU ---\n{enhanced_prompt}"
-                file_info = ""
-            else:
-                full_prompt = enhanced_prompt
-            st.session_state.messages.append({"role": "user", "content": full_prompt})
-
-        with st.chat_message("user"):
-            st.markdown(prompt)
-            
-        with st.chat_message("assistant"):
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json"
-            }
-            
-            api_messages = [{"role": "system", "content": system_prompt}]
-            for m in st.session_state.messages:
-                m_content = m["content"]
-                if isinstance(m_content, dict) and "text" in m_content:
-                    api_messages.append({"role": m["role"], "content": m_content["text"]})
-                elif isinstance(m_content, str):
-                    api_messages.append({"role": m["role"], "content": m_content})
-                elif isinstance(m_content, list):
-                    api_messages.append({"role": m["role"], "content": m_content})
-            
-            free_models = [
-                "openrouter/free",
-                "google/gemini-flash-1.5:free",
-                "meta-llama/llama-3.3-70b-instruct:free",
-                "qwen/qwen-2.5-7b-instruct:free"
-            ]
-            
-            success = False
-            response_text = ""
-            last_error = ""
-
-            for model_name in free_models:
-                payload = {
-                    "model": model_name,
-                    "messages": api_messages,
-                    "temperature": temperature
-                }
-
-        
-    
-    
-                
+                <button onclick="stopSpeech()" style="background-color: #555; color: white;
