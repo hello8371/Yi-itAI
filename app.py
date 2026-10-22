@@ -19,7 +19,7 @@ if "messages" not in st.session_state:
 # --- SOL YAN MENÜ (SIDEBAR & SEÇENEKLER) ---
 with st.sidebar:
     st.title("YİĞİT AI SEÇENEKLER")
-    st.success("⚡ Hızlı Llama Modu Aktif")
+    st.success("⚡ Hızlı Llama & Flux Modu Aktif")
     st.write("---")
     
     # 1. MOD SEÇİMİ
@@ -30,10 +30,10 @@ with st.sidebar:
     )
     
     # Base Prompt
-    base_prompt = "Senin adın yiğit Aİ premium. Her zaman Türkçe konuşulduğunda Türkçe, İngilizce konuşulduğunda İngilizce cevap vereceksin. Seni kimin geliştirdiğini soran herkese HER ZAMAN 'Ben Yiğit tarafından geliştirildim' diyeceksin. "
+    base_prompt = "Senin adın yiğit Aİ premium. Her zaman Türkçe konuşulduğunda Türkçe, İngilizce konuşulduğunda İngilizce cevap vereceksin. Seni kimin geliştirdiğini soran herkese HER ZAMAN 'Ben Yiğit tarafından geliştirildim' diyeceksin. Asla 'ben resim çizemem' veya 'ben sadece metin üretebilirim' deme! Görsel veya resim istendiğinde, resmi çizeceğini belirt."
     
     if ai_mode == "🎨 Görsel Tasarım & Çizim Uzmanı":
-        system_prompt = base_prompt + "Şu an Görsel Tasarım ve Çizim Modundasın. Kullanıcı senden bir görsel çizmeni istediğinde detaylı tasvir yap ve çizim öner."
+        system_prompt = base_prompt + "Şu an Görsel Tasarım ve Çizim Modundasın. Kullanıcı senden bir görsel çizmeni istediğinde harika bir görsel çizeceğini söyle."
     elif ai_mode == "🌍 Google Arama & Haritalar":
         system_prompt = base_prompt + "Şu an Google Arama ve Haritalar Modundasın. Kullanıcıya güncel internet bilgileri, adresler ve harita verileri hakkında rehberlik et."
     elif ai_mode == "💻 Teknoloji & Yazılım":
@@ -146,7 +146,7 @@ for idx, message in enumerate(st.session_state.messages):
                 elif part.get("type") == "image_url":
                     st.image(part["image_url"]["url"], width=300)
         elif isinstance(content, dict) and "generated_image" in content:
-            st.image(content["generated_image"], caption="Yiğit AI Tarafından Üretildi", width=400)
+            st.image(content["generated_image"], caption="Yiğit AI Tarafından Üretildi", width=500)
             st.markdown(content["text"])
         else:
             st.markdown(content)
@@ -196,7 +196,8 @@ if prompt:
     if not api_key:
         st.error("OpenRouter API anahtarı bulunamadı! Lütfen Streamlit Secrets bölümüne 'OPENROUTER_API_KEY' ekleyin.")
     else:
-        is_image_request = any(keyword in prompt.lower() for keyword in ["çiz", "oluştur", "resim yap", "görsel yap", "tasarla", "draw", "generate image"])
+        image_keywords = ["çiz", "oluştur", "resim", "görsel", "tasarla", "draw", "generate image", "fotoğrafı", "fotoğraf", "wallpaper", "duvar kağıdı", "logo", "kare"]
+        is_image_request = any(keyword in prompt.lower() for keyword in image_keywords)
         
         if ai_mode == "🎨 Görsel Tasarım & Çizim Uzmanı" or is_image_request:
             enhanced_prompt = f"[Görsel Çizim İsteği Algılandı]: Kullanıcı şu görselin oluşturulmasını istiyor: '{prompt}'. Lütfen bu isteğe yaratıcı bir yanıt ver."
@@ -237,7 +238,6 @@ if prompt:
                 elif isinstance(m_content, list):
                     api_messages.append({"role": m["role"], "content": m_content})
             
-            # Llama ve hızlı modelleri en başa aldık
             free_models = [
                 "meta-llama/llama-3.3-70b-instruct:free",
                 "google/gemini-flash-1.5:free",
@@ -277,11 +277,14 @@ if prompt:
 
             if success and response_text:
                 if is_image_request or ai_mode == "🎨 Görsel Tasarım & Çizim Uzmanı":
-                    clean_prompt_for_img = prompt.replace("çiz", "").replace("oluştur", "").replace("resim yap", "").strip()
-                    encoded_img_prompt = urllib.parse.quote(clean_prompt_for_img if clean_prompt_for_img else prompt)
-                    generated_image_url = f"https://image.pollinations.ai/prompt/{encoded_img_prompt}?width=1024&height=1024&nologo=true"
+                    clean_prompt_for_img = prompt.replace("çiz", "").replace("oluştur", "").replace("resim yap", "").replace("resmini yap", "").strip()
                     
-                    st.image(generated_image_url, caption="Yiğit AI Tarafından Üretildi", width=400)
+                    # Kaliteyi artıran Flux komut yapısı
+                    enhanced_img_prompt = f"high quality, 4k, photorealistic, clean interface, {clean_prompt_for_img}"
+                    encoded_img_prompt = urllib.parse.quote(enhanced_img_prompt)
+                    generated_image_url = f"https://image.pollinations.ai/prompt/{encoded_img_prompt}?width=1280&height=720&model=flux&nologo=true"
+                    
+                    st.image(generated_image_url, caption="Yiğit AI Tarafından Üretildi", width=500)
                     st.markdown(response_text)
                     
                     st.session_state.messages.append({
@@ -296,6 +299,7 @@ if prompt:
                     st.session_state.messages.append({"role": "assistant", "content": response_text})
             else:
                 st.error(f"Şu an tüm modeller yoğun. Lütfen birkaç saniye sonra tekrar deneyin.")
+
 
       
 
