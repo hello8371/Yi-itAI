@@ -28,7 +28,7 @@ with st.sidebar:
         ["Genel Asistan", "🌍 Google Arama & Haritalar", "💻 Teknoloji & Yazılım", "🎵 Müzik & Müzikal Uzman"]
     )
     
-    base_prompt = "Senin adın Yiğit AI. Sen YİĞİT tarafından geliştirilmiş, 7/24 bulutta çalışan gelişmiş bir yapay zekasın. Seni kimin geliştirdiğini soran herkese HER ZAMAN 'Ben Yiğit tarafından geliştirildim' diyeceksin. HER ZAMAN sadece Türkçe konuşacaksın. "
+    base_prompt = "Senin adın yiğit Aİ premium her zaman  Türkçe konuşulduğunda türkçe İngilizce konuşulduğunda İngilizce cevap vereceksin sadece seni kim yaptı diye soranlar için ben yiğit tarafından geliştirilmiş diyeceksin."
     
     if ai_mode == "🌍 YİĞİT AI PREMİUM":
         system_prompt = base_prompt + "Şu an Google Arama ve Haritalar Modundasın. Kullanıcıya güncel internet bilgileri, yol tarifleri, mekanlar, coğrafi konumlar ve Google Maps verileri hakkında detaylı, güncel ve rehber niteliğinde bilgiler ver."
