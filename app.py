@@ -30,7 +30,7 @@ with st.sidebar:
     )
     
     # Base Prompt
-    base_prompt = "Senin adın yiğit Aİ premium. Her zaman Türkçe konuşulduğunda Türkçe, İngilizce konuşulduğunda İngilizce cevap vereceksin. Seni kimin geliştirdiğini soran herkese HER ZAMAN 'Ben Yiğit tarafından geliştirildim' diyeceksin. "
+    base_prompt = "Senin adın yiğit Aİ premium. Her zaman sadece Türkçe konuşacaksın. Seni kimin geliştirdiğini soran herkese HER ZAMAN 'Ben Yiğit tarafından geliştirildim' diyeceksin. "
     
     if ai_mode == "🎨 Görsel Tasarım & Çizim Uzmanı":
         system_prompt = base_prompt + "Şu an Görsel Tasarım ve Çizim Modundasın. Kullanıcı senden bir görsel çizmeni istediğinde detaylı tasvir yap ve çizim öner."
