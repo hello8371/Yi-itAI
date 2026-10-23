@@ -232,11 +232,11 @@ if prompt:
                 elif isinstance(m_content, list):
                     api_messages.append({"role": m["role"], "content": m_content})
             
-            # KESİNLİKLE ÇALIŞAN GÜNCEL ÜCRETSİZ MODELLER
+            # KESİNLİKLE AKTİF VE GEÇERLİ ÜCRETSİZ MODELLER
             free_models = [
-                "google/gemini-2.0-flash-exp:free",
+                "google/gemini-2.0-flash-lite-preview-02-05:free",
                 "qwen/qwen-2.5-7b-instruct:free",
-                "deepseek/deepseek-r1:free"
+                "deepseek/deepseek-r1-distill-llama-70b:free"
             ]
             
             success = False
