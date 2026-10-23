@@ -19,7 +19,7 @@ if "messages" not in st.session_state:
 # --- SOL YAN MENÜ (SIDEBAR & SEÇENEKLER) ---
 with st.sidebar:
     st.title("YİĞİT AI SEÇENEKLER")
-    st.success("⚡ HİPER HIZ YİĞİT AI")
+    st.success("⚡ Premium Beyin Aktif")
     st.write("---")
     
     # 1. MOD SEÇİMİ
@@ -102,7 +102,7 @@ with st.sidebar:
         st.rerun()
 
 # --- ANA EKRAN ---
-st.title("🧠 Yiğit AI PREMİUM'U KULLANDIĞINIZ İÇİN TEŞEKKÜR EDERİM")
+st.title("🧠 Yiğit AI - Premium Portal")
 st.write(f"Aktif Mod: **{ai_mode}** | Toplam Mesaj Sayısı: **{len(st.session_state.messages)}**")
 
 # --- 4. EVRENSEL DOSYA VE GÖRSEL YÜKLEME KÖŞESİ ---
@@ -190,6 +190,12 @@ for idx, message in enumerate(st.session_state.messages):
             </script>
             """
             components.html(voice_html, height=50)
+
+# --- YAZMA YERİNİN ÜST KISMI İÇİN BAŞLIK ---
+st.markdown("### YİĞİT AI PREMİUM SÜRÜM")
+
+# --- KULLANICI GİRDİSİ VE API İSTEĞİ ---
+prompt = st.chat_input("Yiğit AI'ya bir şey sorun veya görsel çizmesini isteyin...")
 
 if prompt:
     if not api_key:
