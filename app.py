@@ -19,7 +19,7 @@ if "messages" not in st.session_state:
 # --- SOL YAN MENÜ (SIDEBAR & SEÇENEKLER) ---
 with st.sidebar:
     st.title("YİĞİT AI SEÇENEKLER")
-    st.success("⚡ YİĞİT AI PREMİUM")
+    st.success("⚡ Premium Beyin Aktif")
     st.write("---")
     
     # 1. MOD SEÇİMİ
@@ -102,7 +102,7 @@ with st.sidebar:
         st.rerun()
 
 # --- ANA EKRAN ---
-st.title("🧠 Yiğit AI - Premium")
+st.title("🧠 Yiğit AI - Premium Portal")
 st.write(f"Aktif Mod: **{ai_mode}** | Toplam Mesaj Sayısı: **{len(st.session_state.messages)}**")
 
 # --- 4. EVRENSEL DOSYA VE GÖRSEL YÜKLEME KÖŞESİ ---
@@ -191,6 +191,9 @@ for idx, message in enumerate(st.session_state.messages):
             """
             components.html(voice_html, height=50)
 
+# --- YAZMA YERİNİN ÜST KISMI İÇİN BAŞLIK ---
+st.markdown("### YİĞİT AI PREMİUM SÜRÜM")
+
 # --- KULLANICI GİRDİSİ VE API İSTEĞİ ---
 prompt = st.chat_input("Yiğit AI'ya bir şey sorun veya görsel çizmesini isteyin...")
 
@@ -244,6 +247,7 @@ if prompt:
             
             success = False
             response_text = ""
+            last_error = ""
 
             for model_name in free_models:
                 payload = {
@@ -257,7 +261,7 @@ if prompt:
                         "https://openrouter.ai/api/v1/chat/completions",
                         headers=headers,
                         json=payload,
-                        timeout=25
+                        timeout=35
                     )
                     
                     if response.status_code == 200:
@@ -265,11 +269,15 @@ if prompt:
                         response_text = result["choices"][0]["message"]["content"]
                         success = True
                         break
-                except Exception:
+                    else:
+                        last_error = f"Kod {response.status_code}: {response.text}"
+                except Exception as e:
+                    last_error = str(e)
                     continue
 
             if not success or not response_text:
-                response_text = "aşkım"
+                st.error(f"⚠️ OpenRouter Bağlantı Hatası: (Detay: {last_error})")
+                response_text = "Şu an sunucular çok yoğun veya yanıt alınamadı, lütfen tekrar dene."
 
             if is_image_request:
                 clean_prompt = prompt.lower()
