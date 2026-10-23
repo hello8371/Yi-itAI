@@ -269,7 +269,7 @@ if prompt:
                     continue
 
             if not success or not response_text:
-                response_text = "Size nasıl yardımcı olabilirim?"
+                response_text = "aşkım"
 
             if is_image_request:
                 clean_prompt = prompt.lower()
