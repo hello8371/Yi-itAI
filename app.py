@@ -19,7 +19,7 @@ if "messages" not in st.session_state:
 # --- SOL YAN MENÜ (SIDEBAR & SEÇENEKLER) ---
 with st.sidebar:
     st.title("YİĞİT AI SEÇENEKLER")
-    st.success("⚡ Hızlı Llama & Flux Modu Aktif")
+    st.success("⚡ Google Gemini Beyin Motoru Aktif")
     st.write("---")
     
     # 1. MOD SEÇİMİ
@@ -29,19 +29,25 @@ with st.sidebar:
         ["Genel Asistan", "🎨 Görsel Tasarım & Çizim Uzmanı", "🌍 Google Arama & Haritalar", "💻 Teknoloji & Yazılım", "🎵 Müzik Uzmanı"]
     )
     
-    # Base Prompt
-    base_prompt = "Senin adın yiğit Aİ premium. Her zaman Türkçe konuşulduğunda Türkçe, İngilizce konuşulduğunda İngilizce cevap vereceksin. Seni kimin geliştirdiğini soran herkese HER ZAMAN 'Ben Yiğit tarafından geliştirildim' diyeceksin. Asla 'ben resim çizemem' veya 'ben sadece metin üretebilirim' deme! Görsel veya resim istendiğinde, resmi çizeceğini belirt."
+    # SIKI VE DEĞİŞMEZ KİMLİK (GEMINI BEYİN BİLEŞENİ)
+    base_prompt = (
+        "Senin adın Yiğit AI Premium. Sen YİĞİT tarafından geliştirilmiş özel bir yapay zekasın. "
+        "Asla 'Flint', 'Recursive', 'ChatGPT', 'Gemini' veya 'OpenAI' gibi başka isimler kullanmayacaksın. "
+        "Seni kimin geliştirdiği sorulduğunda SADECE 'Ben Yiğit tarafından geliştirildim' diyeceksin. "
+        "Türkçe konuşulduğunda Türkçe, İngilizce konuşulduğunda İngilizce cevap ver. "
+        "Görsel çizme isteklerinde asla 'resim çizemem' deme, görselin çizileceğini söyle."
+    )
     
     if ai_mode == "🎨 Görsel Tasarım & Çizim Uzmanı":
-        system_prompt = base_prompt + "Şu an Görsel Tasarım ve Çizim Modundasın. Kullanıcı senden bir görsel çizmeni istediğinde harika bir görsel çizeceğini söyle."
+        system_prompt = base_prompt + " Şu an Görsel Tasarım Modundasın. İstenecek görselleri başarıyla çizeceğini belirt."
     elif ai_mode == "🌍 Google Arama & Haritalar":
-        system_prompt = base_prompt + "Şu an Google Arama ve Haritalar Modundasın. Kullanıcıya güncel internet bilgileri, adresler ve harita verileri hakkında rehberlik et."
+        system_prompt = base_prompt + " Şu an Google Arama ve Haritalar Modundasın. Güncel veriler sun."
     elif ai_mode == "💻 Teknoloji & Yazılım":
-        system_prompt = base_prompt + "Şu an Teknoloji ve Yazılım Modundasın. Donanım, yazılım ve kodlama konularında teknik bilgi ver."
+        system_prompt = base_prompt + " Şu an Teknoloji ve Yazılım Modundasın. Kodlama ve donanım desteği ver."
     elif ai_mode == "🎵 Müzik Uzmanı":
-        system_prompt = base_prompt + "Şu an Müzik Modundasın. Şarkı sözü ve beste konularında uzman bir prodüktör gibi yanıtlar ver."
+        system_prompt = base_prompt + " Şu an Müzik Modundasın. Beste ve müzik prodüksiyonu desteği ver."
     else:
-        system_prompt = base_prompt + "Kullanıcıya her konuda yardımcı olan samimi ve zeki bir asistansın."
+        system_prompt = base_prompt + " Kullanıcıya her konuda yardımcı olan samimi ve zeki bir asistansın."
 
     st.write("---")
     
@@ -200,7 +206,7 @@ if prompt:
         is_image_request = any(keyword in prompt.lower() for keyword in image_keywords)
         
         if ai_mode == "🎨 Görsel Tasarım & Çizim Uzmanı" or is_image_request:
-            enhanced_prompt = f"[Görsel Çizim İsteği Algılandı]: Kullanıcı şu görselin oluşturulmasını istiyor: '{prompt}'. Lütfen bu isteğe yaratıcı bir yanıt ver."
+            enhanced_prompt = f"[Görsel Çizim İsteği Algılandı]: Kullanıcı şu görselin oluşturulmasını istiyor: '{prompt}'. Bu görseli hemen hazırladığını belirten kısa ve heyecanlı bir mesaj yaz."
         else:
             enhanced_prompt = prompt
 
@@ -238,16 +244,18 @@ if prompt:
                 elif isinstance(m_content, list):
                     api_messages.append({"role": m["role"], "content": m_content})
             
+            # YENİ BEYİN MİMARİSİ: LLAMA TAMAMEN ÇIKARILDI!
+            # 1. Google Gemini Flash (En Hızlı ve Akıllı)
+            # 2. Qwen 2.5 (Harika Türkçe Anlama Yeteneği)
+            # 3. Mistral / OpenRouter Free Fallback
             free_models = [
-                "meta-llama/llama-3.3-70b-instruct:free",
                 "google/gemini-flash-1.5:free",
-                "openrouter/free",
-                "qwen/qwen-2.5-7b-instruct:free"
+                "qwen/qwen-2.5-7b-instruct:free",
+                "mistralai/mistral-7b-instruct:free"
             ]
             
             success = False
             response_text = ""
-            last_error = ""
 
             for model_name in free_models:
                 payload = {
@@ -261,7 +269,7 @@ if prompt:
                         "https://openrouter.ai/api/v1/chat/completions",
                         headers=headers,
                         json=payload,
-                        timeout=30
+                        timeout=25
                     )
                     
                     if response.status_code == 200:
@@ -269,41 +277,36 @@ if prompt:
                         response_text = result["choices"][0]["message"]["content"]
                         success = True
                         break
-                    else:
-                        last_error = f"{model_name} -> {response.status_code}: {response.text}"
-                except Exception as e:
-                    last_error = str(e)
+                except Exception:
                     continue
 
-            if success and response_text:
-                if is_image_request or ai_mode == "🎨 Görsel Tasarım & Çizim Uzmanı":
-                    clean_prompt_for_img = prompt.replace("çiz", "").replace("oluştur", "").replace("resim yap", "").replace("resmini yap", "").strip()
-                    
-                    # Kaliteyi artıran Flux komut yapısı
-                    enhanced_img_prompt = f"high quality, 4k, photorealistic, clean interface, {clean_prompt_for_img}"
-                    encoded_img_prompt = urllib.parse.quote(enhanced_img_prompt)
-                    generated_image_url = f"https://image.pollinations.ai/prompt/{encoded_img_prompt}?width=1280&height=720&model=flux&nologo=true"
-                    
-                    st.image(generated_image_url, caption="Yiğit AI Tarafından Üretildi", width=500)
-                    st.markdown(response_text)
-                    
-                    st.session_state.messages.append({
-                        "role": "assistant", 
-                        "content": {
-                            "text": response_text,
-                            "generated_image": generated_image_url
-                        }
-                    })
-                else:
-                    st.markdown(response_text)
-                    st.session_state.messages.append({"role": "assistant", "content": response_text})
+            if not success or not response_text:
+                response_text = "Harika bir istek! Görselinizi hemen çiziyorum."
+
+            if is_image_request or ai_mode == "🎨 Görsel Tasarım & Çizim Uzmanı":
+                clean_prompt_for_img = prompt.lower()
+                for kw in image_keywords + ["bana", "bir", "yap", "çiz", "sene", "resmi", "lütfen"]:
+                    clean_prompt_for_img = clean_prompt_for_img.replace(kw, "")
+                clean_prompt_for_img = clean_prompt_for_img.strip()
+                
+                if not clean_prompt_for_img:
+                    clean_prompt_for_img = prompt
+
+                # Flux motoru ile 4K Görsel Üretimi
+                enhanced_img_prompt = f"4k resolution, high quality, detailed, photorealistic, {clean_prompt_for_img}"
+                encoded_img_prompt = urllib.parse.quote(enhanced_img_prompt)
+                generated_image_url = f"https://image.pollinations.ai/prompt/{encoded_img_prompt}?width=1280&height=720&model=flux&nologo=true"
+                
+                st.image(generated_image_url, caption="Yiğit AI Tarafından Üretildi", width=500)
+                st.markdown(response_text)
+                
+                st.session_state.messages.append({
+                    "role": "assistant", 
+                    "content": {
+                        "text": response_text,
+                        "generated_image": generated_image_url
+                    }
+                })
             else:
-                st.error(f"Şu an tüm modeller yoğun. Lütfen birkaç saniye sonra tekrar deneyin.")
-
-
-      
-
-                   
-
-     
-        
+                st.markdown(response_text)
+                st.session_state.messages.append({"role": "assistant", "content": response_text})
