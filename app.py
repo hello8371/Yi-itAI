@@ -232,11 +232,11 @@ if prompt:
                 elif isinstance(m_content, list):
                     api_messages.append({"role": m["role"], "content": m_content})
             
-            # KESİNLİKLE AKTİF VE GEÇERLİ ÜCRETSİZ MODELLER
+            # GÜNCEL VE DİRENÇLİ MODEL LİSTESİ
             free_models = [
-                "google/gemini-2.0-flash-lite-preview-02-05:free",
+                "google/gemini-2.0-flash-lite-001:free",
                 "qwen/qwen-2.5-7b-instruct:free",
-                "deepseek/deepseek-r1-distill-llama-70b:free"
+                "meta-llama/llama-3.3-70b-instruct:free"
             ]
             
             success = False
@@ -264,7 +264,8 @@ if prompt:
                         success = True
                         break
                     else:
-                        last_error = f"Kod {response.status_code}: {response.text}"
+                        # 404 veya diğer hataları kaydet, döngünün sonraki modele geçmesini sağla
+                        last_error = f"Model ({model_name}) Hata {response.status_code}: {response.text}"
                 except Exception as e:
                     last_error = str(e)
                     continue
