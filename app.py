@@ -7,7 +7,7 @@ import re
 import urllib.parse
 
 # --- SAYFA AYARLARI ---
-st.set_page_config(page_title="Yiğit AI - Premium Sürüm", page_icon="🧠", layout="wide")
+st.set_page_config(page_title="YİĞİT AI", page_icon="🧠", layout="wide")
 
 # --- API KEYS ---
 api_key = st.secrets.get("OPENROUTER_API_KEY", "")
@@ -19,7 +19,6 @@ if "messages" not in st.session_state:
 # --- SOL YAN MENÜ (SIDEBAR & SEÇENEKLER) ---
 with st.sidebar:
     st.title("YİĞİT AI SEÇENEKLER")
-    st.success("⚡ Premium Beyin Aktif")
     st.write("---")
     
     # 1. MOD SEÇİMİ
@@ -31,22 +30,22 @@ with st.sidebar:
     
     # SIKI KİMLİK TANIMI
     base_prompt = (
-        "Senin adın Yiğit AI Premium. Sen YİĞİT tarafından geliştirilmiş özel bir yapay zekasın. "
+        "Senin adın Yiğit AI. Sen YİĞİT tarafından geliştirilmiş özel bir yapay zekasın. "
         "Asla 'Flint', 'Recursive', 'ChatGPT' veya 'OpenAI' gibi başka isimler kullanmayacaksın. "
         "Seni kimin geliştirdiği sorulduğunda SADECE 'Ben Yiğit tarafından geliştirildim' diyeceksin. "
         "Türkçe konuşulduğunda Türkçe, İngilizce konuşulduğunda İngilizce cevap ver."
     )
     
     if ai_mode == "🎨 Görsel Tasarım & Çizim Uzmanı":
-        system_prompt = base_prompt + " Şu an Görsel Tasarım Modundasın."
+        system_prompt = base_prompt + " Şu an Görsel Tasarım Modundasın. Detaylı ve yaratıcı tasvirler yap."
     elif ai_mode == "🌍 Google Arama & Haritalar":
-        system_prompt = base_prompt + " Şu an Google Arama ve Haritalar Modundasın."
+        system_prompt = base_prompt + " Şu an Google Arama ve Haritalar Modundasın. Kesin ve net bilgiler sun."
     elif ai_mode == "💻 Teknoloji & Yazılım":
-        system_prompt = base_prompt + " Şu an Teknoloji ve Yazılım Modundasın."
+        system_prompt = base_prompt + " Şu an Teknoloji ve Yazılım Modundasın. İleri düzey kodlama ve donanım analizi yap."
     elif ai_mode == "🎵 Müzik Uzmanı":
-        system_prompt = base_prompt + " Şu an Müzik Modundasın."
+        system_prompt = base_prompt + " Şu an Müzik Modundasın. Beste ve müzik teorisinde rehberlik et."
     else:
-        system_prompt = base_prompt + " Kullanıcıya her konuda yardımcı olan samimi ve zeki bir asistansın."
+        system_prompt = base_prompt + " Kullanıcıya her konuda yardımcı olan son derece akıllı ve samimi bir asistansın."
 
     st.write("---")
     
@@ -101,19 +100,17 @@ with st.sidebar:
         st.session_state.messages = []
         st.rerun()
 
-# --- ANA EKRAN ---
-st.title("🧠 Yiğit AI - Premium Portal")
-st.write(f"Aktif Mod: **{ai_mode}** | Toplam Mesaj Sayısı: **{len(st.session_state.messages)}**")
+# --- ANA EKRAN (SADECE BAŞLIK) ---
+st.title("YİĞİT AI")
 
-# --- 4. EVRENSEL DOSYA VE GÖRSEL YÜKLEME KÖŞESİ ---
-with st.expander("📁 Dosya & Görsel Analiz Köşesi (Görseller Desteklenir)"):
-    uploaded_file = st.file_uploader("Görsel (.jpg, .png) veya herhangi bir dosya yükleyin", type=None)
+# --- DOSYA VE GÖRSEL YÜKLEME KÖŞESİ ---
+with st.expander("📁 Dosya & Görsel Analiz Köşesi"):
+    uploaded_file = st.file_uploader("Görsel veya dosya yükleyin", type=None)
     file_info = ""
     image_payload_data = None
     
     if uploaded_file is not None:
         file_name = uploaded_file.name
-        file_size_kb = round(uploaded_file.size / 1024, 2)
         file_extension = file_name.split('.')[-1].lower()
         
         try:
@@ -129,7 +126,7 @@ with st.expander("📁 Dosya & Görsel Analiz Köşesi (Görseller Desteklenir)"
                     }
                 }
                 st.image(file_bytes, caption=f"Yüklenen Görsel: {file_name}", width=300)
-                st.success(f"🖼️ **'{file_name}'** görseli başarıyla yüklendi!")
+                st.success(f"🖼️ **'{file_name}'** yüklendi!")
             else:
                 try:
                     decoded_text = file_bytes.decode("utf-8")
@@ -191,17 +188,13 @@ for idx, message in enumerate(st.session_state.messages):
             """
             components.html(voice_html, height=50)
 
-# --- YAZMA YERİNİN ÜST KISMI İÇİN BAŞLIK ---
-st.markdown("### YİĞİT AI PREMİUM SÜRÜM")
-
 # --- KULLANICI GİRDİSİ VE API İSTEĞİ ---
-prompt = st.chat_input("Yiğit AI'ya bir şey sorun veya görsel çizmesini isteyin...")
+prompt = st.chat_input("Yiğit AI'ya bir şey sorun...")
 
 if prompt:
     if not api_key:
         st.error("OpenRouter API anahtarı bulunamadı! Lütfen Streamlit Secrets bölümüne 'OPENROUTER_API_KEY' ekleyin.")
     else:
-        # Sadece GERÇEKTEN çizim istendiğinde tetiklenen hassas kontrol
         image_triggers = ["resmini çiz", "görselini çiz", "resim çiz", "görsel çiz", "resmini yap", "fotoğrafını çiz", "draw ", "generate image"]
         is_image_request = any(trig in prompt.lower() for trig in image_triggers) or (ai_mode == "🎨 Görsel Tasarım & Çizim Uzmanı" and len(prompt) > 3)
 
@@ -239,11 +232,10 @@ if prompt:
                 elif isinstance(m_content, list):
                     api_messages.append({"role": m["role"], "content": m_content})
             
-            # GÜNCELLENMİŞ AKTİF ÜCRETSİZ MODELLER LİSTESİ
             free_models = [
-                "google/gemini-flash-1.5",
-                "deepseek/deepseek-chat:free",
-                "meta-llama/llama-3-8b-instruct:free"
+                "google/gemini-flash-1.5:free",
+                "qwen/qwen-2.5-7b-instruct:free",
+                "meta-llama/llama-3.1-8b-instruct:free"
             ]
             
             success = False
@@ -278,7 +270,7 @@ if prompt:
 
             if not success or not response_text:
                 st.error(f"⚠️ OpenRouter Bağlantı Hatası: (Detay: {last_error})")
-                response_text = "Şu an sunucular çok yoğun veya yanıt alınamadı, lütfen tekrar dene."
+                response_text = "Şu an sunucular çok yoğun, lütfen birkaç saniye sonra tekrar deneyin."
 
             if is_image_request:
                 clean_prompt = prompt.lower()
