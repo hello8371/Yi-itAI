@@ -19,7 +19,7 @@ if "messages" not in st.session_state:
 # --- SOL YAN MENÜ (SIDEBAR & SEÇENEKLER) ---
 with st.sidebar:
     st.title("YİĞİT AI SEÇENEKLER")
-    st.success("⚡ Google Gemini Beyin Motoru Aktif")
+    st.success("⚡ Premium Beyin Aktif")
     st.write("---")
     
     # 1. MOD SEÇİMİ
@@ -29,23 +29,22 @@ with st.sidebar:
         ["Genel Asistan", "🎨 Görsel Tasarım & Çizim Uzmanı", "🌍 Google Arama & Haritalar", "💻 Teknoloji & Yazılım", "🎵 Müzik Uzmanı"]
     )
     
-    # SIKI VE DEĞİŞMEZ KİMLİK (GEMINI BEYİN BİLEŞENİ)
+    # SIKI KİMLİK TANIMI
     base_prompt = (
         "Senin adın Yiğit AI Premium. Sen YİĞİT tarafından geliştirilmiş özel bir yapay zekasın. "
-        "Asla 'Flint', 'Recursive', 'ChatGPT', 'Gemini' veya 'OpenAI' gibi başka isimler kullanmayacaksın. "
+        "Asla 'Flint', 'Recursive', 'ChatGPT' veya 'OpenAI' gibi başka isimler kullanmayacaksın. "
         "Seni kimin geliştirdiği sorulduğunda SADECE 'Ben Yiğit tarafından geliştirildim' diyeceksin. "
-        "Türkçe konuşulduğunda Türkçe, İngilizce konuşulduğunda İngilizce cevap ver. "
-        "Görsel çizme isteklerinde asla 'resim çizemem' deme, görselin çizileceğini söyle."
+        "Türkçe konuşulduğunda Türkçe, İngilizce konuşulduğunda İngilizce cevap ver."
     )
     
     if ai_mode == "🎨 Görsel Tasarım & Çizim Uzmanı":
-        system_prompt = base_prompt + " Şu an Görsel Tasarım Modundasın. İstenecek görselleri başarıyla çizeceğini belirt."
+        system_prompt = base_prompt + " Şu an Görsel Tasarım Modundasın."
     elif ai_mode == "🌍 Google Arama & Haritalar":
-        system_prompt = base_prompt + " Şu an Google Arama ve Haritalar Modundasın. Güncel veriler sun."
+        system_prompt = base_prompt + " Şu an Google Arama ve Haritalar Modundasın."
     elif ai_mode == "💻 Teknoloji & Yazılım":
-        system_prompt = base_prompt + " Şu an Teknoloji ve Yazılım Modundasın. Kodlama ve donanım desteği ver."
+        system_prompt = base_prompt + " Şu an Teknoloji ve Yazılım Modundasın."
     elif ai_mode == "🎵 Müzik Uzmanı":
-        system_prompt = base_prompt + " Şu an Müzik Modundasın. Beste ve müzik prodüksiyonu desteği ver."
+        system_prompt = base_prompt + " Şu an Müzik Modundasın."
     else:
         system_prompt = base_prompt + " Kullanıcıya her konuda yardımcı olan samimi ve zeki bir asistansın."
 
@@ -202,27 +201,23 @@ if prompt:
     if not api_key:
         st.error("OpenRouter API anahtarı bulunamadı! Lütfen Streamlit Secrets bölümüne 'OPENROUTER_API_KEY' ekleyin.")
     else:
-        image_keywords = ["çiz", "oluştur", "resim", "görsel", "tasarla", "draw", "generate image", "fotoğrafı", "fotoğraf", "wallpaper", "duvar kağıdı", "logo", "kare"]
-        is_image_request = any(keyword in prompt.lower() for keyword in image_keywords)
-        
-        if ai_mode == "🎨 Görsel Tasarım & Çizim Uzmanı" or is_image_request:
-            enhanced_prompt = f"[Görsel Çizim İsteği Algılandı]: Kullanıcı şu görselin oluşturulmasını istiyor: '{prompt}'. Bu görseli hemen hazırladığını belirten kısa ve heyecanlı bir mesaj yaz."
-        else:
-            enhanced_prompt = prompt
+        # Sadece GERÇEKTEN çizim istendiğinde tetiklenen hassas kontrol
+        image_triggers = ["resmini çiz", "görselini çiz", "resim çiz", "görsel çiz", "resmini yap", "fotoğrafını çiz", "draw ", "generate image"]
+        is_image_request = any(trig in prompt.lower() for trig in image_triggers) or (ai_mode == "🎨 Görsel Tasarım & Çizim Uzmanı" and len(prompt) > 3)
 
         if image_payload_data:
             user_content_structure = [
-                {"type": "text", "text": enhanced_prompt},
+                {"type": "text", "text": prompt},
                 image_payload_data
             ]
             st.session_state.messages.append({"role": "user", "content": user_content_structure})
             image_payload_data = None
         else:
             if file_info:
-                full_prompt = f"{file_info}\n\n--- KULLANICI SORUSU ---\n{enhanced_prompt}"
+                full_prompt = f"{file_info}\n\n--- KULLANICI SORUSU ---\n{prompt}"
                 file_info = ""
             else:
-                full_prompt = enhanced_prompt
+                full_prompt = prompt
             st.session_state.messages.append({"role": "user", "content": full_prompt})
 
         with st.chat_message("user"):
@@ -244,14 +239,10 @@ if prompt:
                 elif isinstance(m_content, list):
                     api_messages.append({"role": m["role"], "content": m_content})
             
-            # YENİ BEYİN MİMARİSİ: LLAMA TAMAMEN ÇIKARILDI!
-            # 1. Google Gemini Flash (En Hızlı ve Akıllı)
-            # 2. Qwen 2.5 (Harika Türkçe Anlama Yeteneği)
-            # 3. Mistral / OpenRouter Free Fallback
             free_models = [
                 "google/gemini-flash-1.5:free",
                 "qwen/qwen-2.5-7b-instruct:free",
-                "mistralai/mistral-7b-instruct:free"
+                "meta-llama/llama-3.3-70b-instruct:free"
             ]
             
             success = False
@@ -281,32 +272,17 @@ if prompt:
                     continue
 
             if not success or not response_text:
-                response_text = "Harika bir istek! Görselinizi hemen çiziyorum."
+                response_text = "Size nasıl yardımcı olabilirim?"
 
-            if is_image_request or ai_mode == "🎨 Görsel Tasarım & Çizim Uzmanı":
-                clean_prompt_for_img = prompt.lower()
-                for kw in image_keywords + ["bana", "bir", "yap", "çiz", "sene", "resmi", "lütfen"]:
-                    clean_prompt_for_img = clean_prompt_for_img.replace(kw, "")
-                clean_prompt_for_img = clean_prompt_for_img.strip()
-                
-                if not clean_prompt_for_img:
-                    clean_prompt_for_img = prompt
+            if is_image_request:
+                clean_prompt = prompt.lower()
+                for kw in ["resmini çiz", "görselini çiz", "resim çiz", "görsel çiz", "resmini yap", "bana", "bir", "lütfen"]:
+                    clean_prompt = clean_prompt.replace(kw, "")
+                clean_prompt = clean_prompt.strip() or prompt
 
-                # Flux motoru ile 4K Görsel Üretimi
-                enhanced_img_prompt = f"4k resolution, high quality, detailed, photorealistic, {clean_prompt_for_img}"
+                enhanced_img_prompt = f"4k resolution, high quality, detailed, photorealistic, {clean_prompt}"
                 encoded_img_prompt = urllib.parse.quote(enhanced_img_prompt)
                 generated_image_url = f"https://image.pollinations.ai/prompt/{encoded_img_prompt}?width=1280&height=720&model=flux&nologo=true"
                 
                 st.image(generated_image_url, caption="Yiğit AI Tarafından Üretildi", width=500)
-                st.markdown(response_text)
-                
-                st.session_state.messages.append({
-                    "role": "assistant", 
-                    "content": {
-                        "text": response_text,
-                        "generated_image": generated_image_url
-                    }
-                })
-            else:
-                st.markdown(response_text)
-                st.session_state.messages.append({"role": "assistant", "content": response_text})
+                st.markdown(response_
