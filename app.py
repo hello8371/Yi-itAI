@@ -285,4 +285,15 @@ if prompt:
                 generated_image_url = f"https://image.pollinations.ai/prompt/{encoded_img_prompt}?width=1280&height=720&model=flux&nologo=true"
                 
                 st.image(generated_image_url, caption="Yiğit AI Tarafından Üretildi", width=500)
-                st.markdown(response_
+                st.markdown(response_text)
+                
+                st.session_state.messages.append({
+                    "role": "assistant", 
+                    "content": {
+                        "text": response_text,
+                        "generated_image": generated_image_url
+                    }
+                })
+            else:
+                st.markdown(response_text)
+                st.session_state.messages.append({"role": "assistant", "content": response_text})
