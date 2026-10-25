@@ -7,7 +7,7 @@ import re
 import urllib.parse
 
 # --- SAYFA AYARLARI ---
-st.set_page_config(page_title="YİĞİT AI", page_icon="🧠", layout="wide")
+st.set_page_config(page_title="Yiğit AI Premium", page_icon="💎", layout="wide")
 
 # --- API KEYS ---
 api_key = st.secrets.get("OPENROUTER_API_KEY", "")
@@ -16,21 +16,24 @@ api_key = st.secrets.get("OPENROUTER_API_KEY", "")
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# --- SOL YAN MENÜ (SIDEBAR & SEÇENEKLER) ---
+# --- SOL YAN MENÜ (SIDEBAR) ---
 with st.sidebar:
-    st.title("YİĞİT AI SEÇENEKLER")
+    st.title("💎 Yiğit AI Premium")
+    st.markdown("**Özel Sürüm V3.0**")
+    st.write("Bu sistem tamamen Yiğit tarafından en gelişmiş özelliklerle donatılmıştır.")
     st.write("---")
     
-    # 1. MOD SEÇİMİ
+    # 1. ÇALIŞMA MODU
     st.subheader("🎯 Çalışma Modu")
     ai_mode = st.selectbox(
-        "Uzmanlık Alanı Seçin:",
-        ["Genel Asistan", "🎨 Görsel Tasarım & Çizim Uzmanı", "🌍 Google Arama & Haritalar", "💻 Teknoloji & Yazılım", "🎵 Müzik Uzmanı"]
+        "Çalışma Modu",
+        ["Genel Sohbet", "🎨 Görsel Tasarım & Çizim Uzmanı", "🌍 Google Arama & Haritalar", "💻 Teknoloji & Yazılım", "🎵 Müzik Uzmanı"],
+        label_visibility="collapsed"
     )
     
     # SIKI KİMLİK TANIMI
     base_prompt = (
-        "Senin adın Yiğit AI. Sen YİĞİT tarafından geliştirilmiş özel bir yapay zekasın. "
+        "Senin adın Yiğit AI Premium. Sen YİĞİT tarafından geliştirilmiş özel bir yapay zekasın. "
         "Asla 'Flint', 'Recursive', 'ChatGPT' veya 'OpenAI' gibi başka isimler kullanmayacaksın. "
         "Seni kimin geliştirdiği sorulduğunda SADECE 'Ben Yiğit tarafından geliştirildim' diyeceksin. "
         "Türkçe konuşulduğunda Türkçe, İngilizce konuşulduğunda İngilizce cevap ver."
@@ -43,69 +46,24 @@ with st.sidebar:
     elif ai_mode == "💻 Teknoloji & Yazılım":
         system_prompt = base_prompt + " Şu an Teknoloji ve Yazılım Modundasın. İleri düzey kodlama ve donanım analizi yap."
     elif ai_mode == "🎵 Müzik Uzmanı":
-        system_prompt = base_prompt + " Şu an Müzik Modundasın. Beste ve müzik teorisinde rehberlik et."
+        system_prompt = base_prompt + " Şu an Music Modundasın. Beste ve müzik teorisinde rehberlik et."
     else:
         system_prompt = base_prompt + " Kullanıcıya her konuda yardımcı olan son derece akıllı ve samimi bir asistansın."
 
     st.write("---")
     
-    # 2. SOHBET AYARLARI
-    st.subheader("⚙️ Yanıt Ayarları")
-    temperature = st.slider("Yaratıcılık / Esneklik:", min_value=0.1, max_value=1.0, value=0.7, step=0.1)
-
-    st.write("---")
-    
-    # 3. SOHBET GEÇMİŞİ YÖNETİMİ
-    st.subheader("📜 Sohbet Yönetimi")
-    
-    uploaded_history = st.file_uploader("📥 Eski Sohbeti Yükle (.json)", type=["json"], key="history_upload")
-    if uploaded_history is not None:
-        try:
-            loaded_messages = json.load(uploaded_history)
-            st.session_state.messages = loaded_messages
-            st.success("Sohbet geçmişi yüklendi!")
-            st.rerun()
-        except Exception as e:
-            st.error("Geçersiz dosya.")
-
-    json_history = json.dumps(st.session_state.messages, ensure_ascii=False, indent=2)
-    st.download_button(
-        label="💾 Sohbeti Kaydet/İndir (.json)",
-        data=json_history,
-        file_name="yigit_ai_sohbet_yedeği.json",
-        mime="application/json"
-    )
-    
-    txt_history = ""
-    for m in st.session_state.messages:
-        role_name = "Kullanıcı" if m["role"] == "user" else "Yiğit AI"
-        content_val = m['content']
-        if isinstance(content_val, dict):
-            content_text = content_val.get("text", "")
-        elif isinstance(content_val, list):
-            content_text = " ".join([p.get("text", "") for p in content_val if isinstance(p, dict)])
-        else:
-            content_text = str(content_val)
-        txt_history += f"{role_name}: {content_text}\n\n"
-        
-    st.download_button(
-        label="📄 Metin Olarak İndir (.txt)",
-        data=txt_history if txt_history else "Henüz mesaj yok.",
-        file_name="yigit_ai_sohbet_gecmisi.txt",
-        mime="text/plain"
-    )
-    
-    st.write("---")
-    if st.button("🗑️ Sohbeti Temizle"):
+    if st.button("🗑️ Premium Sohbeti Sıfırla"):
         st.session_state.messages = []
         st.rerun()
 
-# --- ANA EKRAN (SADECE BAŞLIK) ---
-st.title("YİĞİT AI")
-
-# --- DOSYA VE GÖRSEL YÜKLEME KÖŞESİ ---
-with st.expander("📁 Dosya & Görsel Analiz Köşesi"):
-    uploaded_file = st.file_uploader("Görsel veya dosya yükleyin", type=None)
+    st.write("---")
+    
+    # 2. VERİ YÜKLEME KÖŞESİ
+    st.subheader("📁 10 GB Premium Veri Yükleme")
+    st.write("Metin, Log, Kod veya Analiz Dosyası Seçin")
+    uploaded_file = st.file_uploader("Yüklemek", type=None, label_visibility="collapsed")
+    st.caption("Dosya başına 10 GB • TXT, LOG, MD, JSON")
+    
     file_info = ""
     image_payload_data = None
     
@@ -125,7 +83,6 @@ with st.expander("📁 Dosya & Görsel Analiz Köşesi"):
                         "url": f"data:{mime_type};base64,{encoded_image}"
                     }
                 }
-                st.image(file_bytes, caption=f"Yüklenen Görsel: {file_name}", width=300)
                 st.success(f"🖼️ **'{file_name}'** yüklendi!")
             else:
                 try:
@@ -136,6 +93,11 @@ with st.expander("📁 Dosya & Görsel Analiz Köşesi"):
                 st.success(f"📎 **'{file_name}'** yüklendi!")
         except Exception as e:
             st.error(f"Hata: {str(e)}")
+
+# --- ANA EKRAN ---
+st.title("💎 Yiğit AI - PREMİUM SÜRÜM")
+st.write(f"Aktif Mod: **{ai_mode}** | %100 Güvenli ve Akıllı Sistem")
+st.write("---")
 
 # --- MESAJLARI EKRANA YAZDIRMA VE SESLİ OKUMA ---
 for idx, message in enumerate(st.session_state.messages):
@@ -189,7 +151,7 @@ for idx, message in enumerate(st.session_state.messages):
             components.html(voice_html, height=50)
 
 # --- KULLANICI GİRDİSİ VE API İSTEĞİ ---
-prompt = st.chat_input("Yiğit AI'ya bir şey sorun...")
+prompt = st.chat_input("Premium yapay zekanıza bir görev verin...")
 
 if prompt:
     if not api_key:
@@ -232,7 +194,7 @@ if prompt:
                 elif isinstance(m_content, list):
                     api_messages.append({"role": m["role"], "content": m_content})
             
-            # GÜNCEL VE SORUNSUZ AKTİF ÜCRETSİZ MODELLER
+            # GÜNCEL VE ÇALIŞAN ÜCRETSİZ MODEL LİSTESİ
             free_models = [
                 "google/gemini-flash-1.5:free",
                 "qwen/qwen-2.5-7b-instruct:free",
@@ -247,7 +209,7 @@ if prompt:
                 payload = {
                     "model": model_name,
                     "messages": api_messages,
-                    "temperature": temperature
+                    "temperature": 0.7
                 }
                 
                 try:
