@@ -46,7 +46,7 @@ with st.sidebar:
     elif ai_mode == "💻 Teknoloji & Yazılım":
         system_prompt = base_prompt + " Şu an Teknoloji ve Yazılım Modundasın. İleri düzey kodlama ve donanım analizi yap."
     elif ai_mode == "🎵 Müzik Uzmanı":
-        system_prompt = base_prompt + " Şu an Music Modundasın. Beste ve müzik teorisinde rehberlik et."
+        system_prompt = base_prompt + " Şu an Müzik Modundasın. Beste ve müzik teorisinde rehberlik et."
     else:
         system_prompt = base_prompt + " Kullanıcıya her konuda yardımcı olan son derece akıllı ve samimi bir asistansın."
 
@@ -194,11 +194,11 @@ if prompt:
                 elif isinstance(m_content, list):
                     api_messages.append({"role": m["role"], "content": m_content})
             
-            # GÜNCEL VE ÇALIŞAN ÜCRETSİZ MODEL LİSTESİ
+            # GÜNCEL VE STABİL ÜCRETSİZ MODEL LİSTESİ
             free_models = [
-                "google/gemini-flash-1.5:free",
+                "google/gemini-flash-1.5",
                 "qwen/qwen-2.5-7b-instruct:free",
-                "mistralai/mistral-7b-instruct:free"
+                "cognitivecomputations/dolphin-mixtral-8x7b:free"
             ]
             
             success = False
