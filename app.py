@@ -195,10 +195,15 @@ if prompt:
                     api_messages.append({"role": m["role"], "content": m_content})
             
             # GÜNCEL VE STABİL ÜCRETSİZ MODEL LİSTESİ
+        # MODEL İSMİ SEÇMEYİ BIRAKIP OTOMATİK YÖNLENDİRİCİYE BIRAKALIM
             free_models = [
-                "google/gemini-flash-1.5",
-                "qwen/qwen-2.5-7b-instruct:free",
-                "cognitivecomputations/dolphin-mixtral-8x7b:free"
+                "openrouter/auto"
+            ]
+
+            
+            
+            
+            
             ]
             
             success = False
