@@ -5,6 +5,7 @@ import base64
 import streamlit.components.v1 as components
 import re
 import urllib.parse
+import time
 
 # --- SAYFA AYARLARI ---
 st.set_page_config(page_title="Yiğit AI Premium", page_icon="💎", layout="wide")
@@ -16,7 +17,7 @@ if "messages" not in st.session_state:
 # --- SOL YAN MENÜ (SIDEBAR) ---
 with st.sidebar:
     st.title("💎 Yiğit AI Premium")
-    st.markdown("**Özel Sürüm V3.0 (Anahtarsız & Sınırsız)**")
+    st.markdown("**Özel Sürüm V3.0 (Akıllı Akış)**")
     st.write("Bu sistem tamamen Yiğit tarafından en gelişmiş özelliklerle donatılmıştır.")
     st.write("---")
     
@@ -43,7 +44,7 @@ with st.sidebar:
     elif ai_mode == "💻 Teknoloji & Yazılım":
         system_prompt = base_prompt + " Şu an Teknoloji ve Yazılım Modundasın. İleri düzey kodlama ve donanım analizi yap."
     elif ai_mode == "🎵 Müzik Uzmanı":
-        system_prompt = base_prompt + " Şu an Müzik Modundasın. Beste ve müzik teorisinde rehberlik et."
+        system_prompt = base_prompt + " Şu an Music Modundasın. Beste ve müzik teorisinde rehberlik et."
     else:
         system_prompt = base_prompt + " Kullanıcıya her konuda yardımcı olan son derece akıllı ve samimi bir asistansın."
 
@@ -93,7 +94,7 @@ with st.sidebar:
 
 # --- ANA EKRAN ---
 st.title("💎 Yiğit AI - PREMİUM SÜRÜM")
-st.write(f"Aktif Mod: **{ai_mode}** | %100 Güvenli, Sınırsız ve Anahtarsız Sistem")
+st.write(f"Aktif Mod: **{ai_mode}** | Otomatik Sınırsız Akış Koruma Aktif")
 st.write("---")
 
 # --- MESAJLARI EKRANA YAZDIRMA VE SESLİ OKUMA ---
@@ -194,25 +195,34 @@ if prompt:
         response_text = ""
         last_error = ""
 
-        try:
-            response = requests.post(
-                "https://text.pollinations.ai/v1/chat/completions",
-                json=payload,
-                timeout=35
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                response_text = result["choices"][0]["message"]["content"]
-                success = True
-            else:
-                last_error = f"Hata {response.status_code}: {response.text}"
-        except Exception as e:
-            last_error = str(e)
+        # OTOMATİK YENİDEN DENEME (RETRY) DÖNGÜSÜ
+        with st.spinner("Yiğit AI yanıt hazırlıyor..."):
+            for attempt in range(3):
+                try:
+                    response = requests.post(
+                        "https://text.pollinations.ai/v1/chat/completions",
+                        json=payload,
+                        timeout=35
+                    )
+                    
+                    if response.status_code == 200:
+                        result = response.json()
+                        response_text = result["choices"][0]["message"]["content"]
+                        success = True
+                        break
+                    elif response.status_code == 402:
+                        last_error = "Sunucu yoğunluk sınırı (402), 6 saniye bekleniyor..."
+                        time.sleep(6)
+                    else:
+                        last_error = f"Hata {response.status_code}: {response.text}"
+                        break
+                except Exception as e:
+                    last_error = str(e)
+                    break
 
         if not success or not response_text:
             st.error(f"⚠️ Bağlantı Hatası: (Detay: {last_error})")
-            response_text = "Şu an sunucular çok yoğun, lütfen birkaç saniye sonra tekrar deneyin."
+            response_text = "Sunucu geçici olarak meşgul, lütfen tekrar deneyin."
 
         if is_image_request:
             clean_prompt = prompt.lower()
@@ -237,5 +247,3 @@ if prompt:
         else:
             st.markdown(response_text)
             st.session_state.messages.append({"role": "assistant", "content": response_text})
-            
-         
