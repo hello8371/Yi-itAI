@@ -9,9 +9,6 @@ import urllib.parse
 # --- SAYFA AYARLARI ---
 st.set_page_config(page_title="Yiğit AI Premium", page_icon="💎", layout="wide")
 
-# --- API KEYS ---
-api_key = st.secrets.get("HUGGINGFACE_API_KEY", "")
-
 # --- SESSION STATES ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -19,7 +16,7 @@ if "messages" not in st.session_state:
 # --- SOL YAN MENÜ (SIDEBAR) ---
 with st.sidebar:
     st.title("💎 Yiğit AI Premium")
-    st.markdown("**Özel Sürüm V3.0**")
+    st.markdown("**Özel Sürüm V3.0 (Anahtarsız & Sınırsız)**")
     st.write("Bu sistem tamamen Yiğit tarafından en gelişmiş özelliklerle donatılmıştır.")
     st.write("---")
     
@@ -34,7 +31,7 @@ with st.sidebar:
     # SIKI KİMLİK TANIMI
     base_prompt = (
         "Senin adın Yiğit AI Premium. Sen YİĞİT tarafından geliştirilmiş özel bir yapay zekasın. "
-        "Asla 'ChatGPT', 'OpenAI' veya 'Hugging Face' gibi başka isimler kullanmayacaksın. "
+        "Asla 'ChatGPT', 'OpenAI' veya başka servis adları kullanmayacaksın. "
         "Seni kimin geliştirdiği sorulduğunda SADECE 'Ben Yiğit tarafından geliştirildim' diyeceksin. "
         "Türkçe konuşulduğunda Türkçe, İngilizce konuşulduğunda İngilizce cevap ver."
     )
@@ -96,7 +93,7 @@ with st.sidebar:
 
 # --- ANA EKRAN ---
 st.title("💎 Yiğit AI - PREMİUM SÜRÜM")
-st.write(f"Aktif Mod: **{ai_mode}** | %100 Güvenli ve Akıllı Sistem")
+st.write(f"Aktif Mod: **{ai_mode}** | %100 Güvenli, Sınırsız ve Anahtarsız Sistem")
 st.write("---")
 
 # --- MESAJLARI EKRANA YAZDIRMA VE SESLİ OKUMA ---
@@ -154,95 +151,91 @@ for idx, message in enumerate(st.session_state.messages):
 prompt = st.chat_input("Premium yapay zekanıza bir görev verin...")
 
 if prompt:
-    if not api_key:
-        st.error("Hugging Face API anahtarı bulunamadı! Lütfen Streamlit Secrets bölümüne 'HUGGINGFACE_API_KEY' ekleyin.")
+    image_triggers = ["resmini çiz", "görselini çiz", "resim çiz", "görsel çiz", "resmini yap", "fotoğrafını çiz", "draw ", "generate image"]
+    is_image_request = any(trig in prompt.lower() for trig in image_triggers) or (ai_mode == "🎨 Görsel Tasarım & Çizim Uzmanı" and len(prompt) > 3)
+
+    if image_payload_data:
+        user_content_structure = [
+            {"type": "text", "text": prompt},
+            image_payload_data
+        ]
+        st.session_state.messages.append({"role": "user", "content": user_content_structure})
+        image_payload_data = None
     else:
-        image_triggers = ["resmini çiz", "görselini çiz", "resim çiz", "görsel çiz", "resmini yap", "fotoğrafını çiz", "draw ", "generate image"]
-        is_image_request = any(trig in prompt.lower() for trig in image_triggers) or (ai_mode == "🎨 Görsel Tasarım & Çizim Uzmanı" and len(prompt) > 3)
-
-        if image_payload_data:
-            user_content_structure = [
-                {"type": "text", "text": prompt},
-                image_payload_data
-            ]
-            st.session_state.messages.append({"role": "user", "content": user_content_structure})
-            image_payload_data = None
+        if file_info:
+            full_prompt = f"{file_info}\n\n--- KULLANICI SORUSU ---\n{prompt}"
+            file_info = ""
         else:
-            if file_info:
-                full_prompt = f"{file_info}\n\n--- KULLANICI SORUSU ---\n{prompt}"
-                file_info = ""
+            full_prompt = prompt
+        st.session_state.messages.append({"role": "user", "content": full_prompt})
+
+    with st.chat_message("user"):
+        st.markdown(prompt)
+        
+    with st.chat_message("assistant"):
+        api_messages = [{"role": "system", "content": system_prompt}]
+        for m in st.session_state.messages:
+            m_content = m["content"]
+            if isinstance(m_content, dict) and "text" in m_content:
+                api_messages.append({"role": m["role"], "content": m_content["text"]})
+            elif isinstance(m_content, str):
+                api_messages.append({"role": m["role"], "content": m_content})
+            elif isinstance(m_content, list):
+                api_messages.append({"role": m["role"], "content": m_content})
+        
+        payload = {
+            "model": "openai",
+            "messages": api_messages,
+            "temperature": 0.7,
+            "max_tokens": 1024
+        }
+        
+        success = False
+        response_text = ""
+        last_error = ""
+
+        try:
+            response = requests.post(
+                "https://text.pollinations.ai/v1/chat/completions",
+                json=payload,
+                timeout=35
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                response_text = result["choices"][0]["message"]["content"]
+                success = True
             else:
-                full_prompt = prompt
-            st.session_state.messages.append({"role": "user", "content": full_prompt})
+                last_error = f"Hata {response.status_code}: {response.text}"
+        except Exception as e:
+            last_error = str(e)
 
-        with st.chat_message("user"):
-            st.markdown(prompt)
+        if not success or not response_text:
+            st.error(f"⚠️ Bağlantı Hatası: (Detay: {last_error})")
+            response_text = "Şu an sunucular çok yoğun, lütfen birkaç saniye sonra tekrar deneyin."
+
+        if is_image_request:
+            clean_prompt = prompt.lower()
+            for kw in ["resmini çiz", "görselini çiz", "resim çiz", "görsel çiz", "resmini yap", "bana", "bir", "lütfen"]:
+                clean_prompt = clean_prompt.replace(kw, "")
+            clean_prompt = clean_prompt.strip() or prompt
+
+            enhanced_img_prompt = f"4k resolution, high quality, detailed, photorealistic, {clean_prompt}"
+            encoded_img_prompt = urllib.parse.quote(enhanced_img_prompt)
+            generated_image_url = f"https://image.pollinations.ai/prompt/{encoded_img_prompt}?width=1280&height=720&model=flux&nologo=true"
             
-        with st.chat_message("assistant"):
-            headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+            st.image(generated_image_url, caption="Yiğit AI Tarafından Üretildi", width=500)
+            st.markdown(response_text)
             
-            api_messages = [{"role": "system", "content": system_prompt}]
-            for m in st.session_state.messages:
-                m_content = m["content"]
-                if isinstance(m_content, dict) and "text" in m_content:
-                    api_messages.append({"role": m["role"], "content": m_content["text"]})
-                elif isinstance(m_content, str):
-                    api_messages.append({"role": m["role"], "content": m_content})
-                elif isinstance(m_content, list):
-                    api_messages.append({"role": m["role"], "content": m_content})
+            st.session_state.messages.append({
+                "role": "assistant", 
+                "content": {
+                    "text": response_text,
+                    "generated_image": generated_image_url
+                }
+            })
+        else:
+            st.markdown(response_text)
+            st.session_state.messages.append({"role": "assistant", "content": response_text})
             
-            payload = {
-                "model": "Qwen/Qwen2.5-72B-Instruct",
-                "messages": api_messages,
-                "temperature": 0.7,
-                "max_tokens": 1024
-            }
-            
-            success = False
-            response_text = ""
-            last_error = ""
-
-            try:
-                response = requests.post(
-                    "https://router.huggingface.co/v1/chat/completions",
-                    headers=headers,
-                    json=payload,
-                    timeout=35
-                )
-                
-                if response.status_code == 200:
-                    result = response.json()
-                    response_text = result["choices"][0]["message"]["content"]
-                    success = True
-                else:
-                    last_error = f"Hata {response.status_code}: {response.text}"
-            except Exception as e:
-                last_error = str(e)
-
-            if not success or not response_text:
-                st.error(f"⚠️ Hugging Face Bağlantı Hatası: (Detay: {last_error})")
-                response_text = "Şu an sunucular çok yoğun, lütfen birkaç saniye sonra tekrar deneyin."
-
-            if is_image_request:
-                clean_prompt = prompt.lower()
-                for kw in ["resmini çiz", "görselini çiz", "resim çiz", "görsel çiz", "resmini yap", "bana", "bir", "lütfen"]:
-                    clean_prompt = clean_prompt.replace(kw, "")
-                clean_prompt = clean_prompt.strip() or prompt
-
-                enhanced_img_prompt = f"4k resolution, high quality, detailed, photorealistic, {clean_prompt}"
-                encoded_img_prompt = urllib.parse.quote(enhanced_img_prompt)
-                generated_image_url = f"https://image.pollinations.ai/prompt/{encoded_img_prompt}?width=1280&height=720&model=flux&nologo=true"
-                
-                st.image(generated_image_url, caption="Yiğit AI Tarafından Üretildi", width=500)
-                st.markdown(response_text)
-                
-                st.session_state.messages.append({
-                    "role": "assistant", 
-                    "content": {
-                        "text": response_text,
-                        "generated_image": generated_image_url
-                    }
-                })
-            else:
-                st.markdown(response_text)
-                st.session_state.messages.append({"role": "assistant", "content": response_text})
+         
