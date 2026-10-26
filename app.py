@@ -151,7 +151,7 @@ for idx, message in enumerate(st.session_state.messages):
             components.html(voice_html, height=50)
 
 # --- KULLANICI GİRDİSİ VE API İSTEĞİ ---
-prompt = st.chat_input("YİĞİT AI ya soru sorun...")
+prompt = st.chat_input("Premium yapay zekanıza bir görev verin...")
 
 if prompt:
     if not api_key:
@@ -191,7 +191,7 @@ if prompt:
                 elif isinstance(m_content, list):
                     api_messages.append({"role": m["role"], "content": m_content})
             
-         payload = {
+            payload = {
                 "model": "Qwen/Qwen2.5-72B-Instruct",
                 "messages": api_messages,
                 "temperature": 0.7,
@@ -246,7 +246,3 @@ if prompt:
             else:
                 st.markdown(response_text)
                 st.session_state.messages.append({"role": "assistant", "content": response_text})
-
-        
-        
-
