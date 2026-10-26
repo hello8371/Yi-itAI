@@ -10,7 +10,7 @@ import urllib.parse
 st.set_page_config(page_title="Yiğit AI Premium", page_icon="💎", layout="wide")
 
 # --- API KEYS ---
-api_key = st.secrets.get("OPENROUTER_API_KEY", "")
+api_key = st.secrets.get("HUGGINGFACE_API_KEY", "")
 
 # --- SESSION STATES ---
 if "messages" not in st.session_state:
@@ -34,7 +34,7 @@ with st.sidebar:
     # SIKI KİMLİK TANIMI
     base_prompt = (
         "Senin adın Yiğit AI Premium. Sen YİĞİT tarafından geliştirilmiş özel bir yapay zekasın. "
-        "Asla 'Flint', 'Recursive', 'ChatGPT' veya 'OpenAI' gibi başka isimler kullanmayacaksın. "
+        "Asla 'ChatGPT', 'OpenAI' veya 'Hugging Face' gibi başka isimler kullanmayacaksın. "
         "Seni kimin geliştirdiği sorulduğunda SADECE 'Ben Yiğit tarafından geliştirildim' diyeceksin. "
         "Türkçe konuşulduğunda Türkçe, İngilizce konuşulduğunda İngilizce cevap ver."
     )
@@ -155,7 +155,7 @@ prompt = st.chat_input("Premium yapay zekanıza bir görev verin...")
 
 if prompt:
     if not api_key:
-        st.error("OpenRouter API anahtarı bulunamadı! Lütfen Streamlit Secrets bölümüne 'OPENROUTER_API_KEY' ekleyin.")
+        st.error("Hugging Face API anahtarı bulunamadı! Lütfen Streamlit Secrets bölümüne 'HUGGINGFACE_API_KEY' ekleyin.")
     else:
         image_triggers = ["resmini çiz", "görselini çiz", "resim çiz", "görsel çiz", "resmini yap", "fotoğrafını çiz", "draw ", "generate image"]
         is_image_request = any(trig in prompt.lower() for trig in image_triggers) or (ai_mode == "🎨 Görsel Tasarım & Çizim Uzmanı" and len(prompt) > 3)
@@ -180,18 +180,4 @@ if prompt:
             
         with st.chat_message("assistant"):
             headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json"
-            }
-            
-            api_messages = [{"role": "system", "content": system_prompt}]
-            for m in st.session_state.messages:
-                m_content = m["content"]
-                if isinstance(m_content, dict) and "text" in m_content:
-                    api_messages.append({"role": m["role"], "content": m_content["text"]})
-                elif isinstance(m_content, str):
-                    api_messages.append({"role": m["role"], "content": m_content})
-                elif isinstance(m_content, list):
-                    api_messages.append({"role": m["role"], "content": m_content})
-            
-            # MODEL ADLARININ SİLİNMESİ RİSKİ
+                "Authorization": f"
