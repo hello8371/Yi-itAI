@@ -201,7 +201,7 @@ if prompt:
             "https://text.apis.pollinations.ai/v1/chat/completions" # Yedek alternatif endpoint
         ]
 
-        with st.spinner("Yiğit AI yanıt hazırlıyor (Yedekli sunucular taranıyor)..."):
+        with st.spinner("Yiğit AI yanıt hazırlıyor..."):
             for endpoint in endpoints:
                 if success:
                     break
