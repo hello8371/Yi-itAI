@@ -94,7 +94,7 @@ with st.sidebar:
 
 # --- ANA EKRAN ---
 st.title("💎 Yiğit AI - PREMİUM SÜRÜM")
-st.write(f"Aktif Mod: **{ai_mode}")
+st.write(f"Aktif Mod:{ai_mode}")
 st.write("---")
 
 # --- MESAJLARI EKRANA YAZDIRMA VE SESLİ OKUMA ---
