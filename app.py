@@ -17,7 +17,7 @@ if "messages" not in st.session_state:
 # --- SOL YAN MENÜ (SIDEBAR) ---
 with st.sidebar:
     st.title("💎 Yiğit AI Premium")
-    st.markdown("**Özel Sürüm V3.0")
+    st.markdown("Özel Sürüm V3.0")
     st.write("Bu sistem  Yiğit tarafından en gelişmiş özelliklerle donatılmıştır.")
     st.write("---")
     
