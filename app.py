@@ -18,7 +18,7 @@ if "messages" not in st.session_state:
 with st.sidebar:
     st.title("💎 Yiğit AI Premium")
     st.markdown("Özel Sürüm V3.0")
-    st.write("Bu sistem  Yiğit tarafından en gelişmiş özelliklerle donatılmıştır.")
+    st.write("Bu sistem Yiğit tarafından en gelişmiş özelliklerle donatılmıştır.")
     st.write("---")
     
     # 1. ÇALIŞMA MODU
@@ -94,7 +94,7 @@ with st.sidebar:
 
 # --- ANA EKRAN ---
 st.title("💎 Yiğit AI - PREMİUM SÜRÜM")
-st.write(f"Aktif Mod: {ai_mode}")
+st.write(f"Aktif Mod:{ai_mode}")
 st.write("---")
 
 # --- MESAJLARI EKRANA YAZDIRMA VE SESLİ OKUMA ---
@@ -195,38 +195,32 @@ if prompt:
         response_text = ""
         last_error = ""
 
-        # ÇİFT SUNUCULU YEDEKKLİ BAĞLANTI SİSTEMİ
-        endpoints = [
-            "https://text.pollinations.ai/v1/chat/completions",
-            "https://text.apis.pollinations.ai/v1/chat/completions" # Yedek alternatif endpoint
-        ]
+        # DOĞRU VE ÇALIŞAN TEK SUNUCU ADRESİ
+        endpoint = "https://text.pollinations.ai/v1/chat/completions"
 
         with st.spinner("Yiğit AI yanıt hazırlıyor..."):
-            for endpoint in endpoints:
-                if success:
-                    break
-                for attempt in range(2):
-                    try:
-                        response = requests.post(
-                            endpoint,
-                            json=payload,
-                            timeout=25
-                        )
-                        
-                        if response.status_code == 200:
-                            result = response.json()
-                            response_text = result["choices"][0]["message"]["content"]
-                            success = True
-                            break
-                        elif response.status_code in [402, 429, 503, 504]:
-                            last_error = f"Sunucu yoğun (Kod {response.status_code})"
-                            time.sleep(2)
-                        else:
-                            last_error = f"Hata {response.status_code}"
-                            break
-                    except Exception as e:
-                        last_error = str(e)
-                        time.sleep(2)
+            for attempt in range(3):
+                try:
+                    response = requests.post(
+                        endpoint,
+                        json=payload,
+                        timeout=30
+                    )
+                    
+                    if response.status_code == 200:
+                        result = response.json()
+                        response_text = result["choices"][0]["message"]["content"]
+                        success = True
+                        break
+                    elif response.status_code in [402, 429, 503, 504]:
+                        last_error = f"Sunucu yoğun (Kod {response.status_code}), bekleniyor..."
+                        time.sleep(3)
+                    else:
+                        last_error = f"Hata {response.status_code}: {response.text}"
+                        break
+                except Exception as e:
+                    last_error = str(e)
+                    time.sleep(2)
 
         if not success or not response_text:
             st.error(f"⚠️ Bağlantı Hatası: (Detay: {last_error})")
