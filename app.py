@@ -11,7 +11,6 @@ st.set_page_config(page_title="Yiğit AI Premium - Yerel Bulut", page_icon="💎
 # --- MODELİ YÜKLEME (Önbelleğe Alınır) ---
 @st.cache_resource
 def load_ai_model():
-    # Hugging Face üzerinde doğrudan çalışan güçlü ve hızlı yerel model
     model_id = "Qwen/Qwen2.5-1.5B-Instruct"
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     model = AutoModelForCausalLM.from_pretrained(
@@ -57,7 +56,7 @@ st.title("💎 Yiğit AI - YEREL BULUT SÜRÜMÜ")
 st.write(f"Aktif Mod: **{ai_mode}** | Doğrudan Bulut Gücü Aktif")
 st.write("---")
 
-# --- GEÇMİŞİ EKRANA YAZDIRMA ---
+# --- GEÇMİŞİ EKRANA YAZDIRMA VE SESLİ OKUMA ---
 for idx, message in enumerate(st.session_state.messages):
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
@@ -71,13 +70,20 @@ for idx, message in enumerate(st.session_state.messages):
                 <button onclick="speakText_{idx}()" style="background-color: #ff4b4b; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px;">
                     🔊 Sesli Dinle
                 </button>
+                <button onclick="stopSpeech()" style="background-color: #555; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px; margin-left: 5px;">
+                    ⏹️ Durdur
+                </button>
             </div>
             <script>
                 function speakText_{idx}() {{
                     window.speechSynthesis.cancel();
                     var utterance = new SpeechSynthesisUtterance("{clean_text}");
                     utterance.lang = 'tr-TR';
+                    utterance.rate = 1.0;
                     window.speechSynthesis.speak(utterance);
+                }}
+                function stopSpeech() {{
+                    window.speechSynthesis.cancel();
                 }}
             </script>
             """
@@ -94,12 +100,10 @@ if prompt:
     with st.chat_message("assistant"):
         with st.spinner("Yiğit AI bulutta düşünüyor..."):
             try:
-                # Konuşma geçmişini formüle et
                 formatted_messages = [{"role": "system", "content": base_prompt}]
                 for m in st.session_state.messages:
                     formatted_messages.append({"role": m["role"], "content": m["content"]})
                 
-                # Yerel modelden yanıt üret
                 outputs = ai_pipeline(
                     formatted_messages,
                     max_new_tokens=512,
@@ -107,11 +111,39 @@ if prompt:
                     temperature=0.7,
                     top_p=0.9
                 )
-                
-                # Üretilen yanıtı al
                 response_text = outputs[0]["generated_text"][-1]["content"]
             except Exception as e:
                 response_text = f"Yerel model çalıştırılırken bir hata oluştu: {str(e)}"
                 
         st.markdown(response_text)
+        
+        # Ekrandaki anlık yanıt için de ses butonunu hemen oluşturalım
+        clean_text = re.sub(r'[\*#_`~-]', '', response_text)
+        clean_text = clean_text.replace('"', '\\"').replace("'", "\\'").replace('\n', ' ')
+        current_idx = len(st.session_state.messages)
+        
+        voice_html = f"""
+        <div style="margin-top: 5px;">
+            <button onclick="speakText_{current_idx}()" style="background-color: #ff4b4b; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px;">
+                🔊 Sesli Dinle
+            </button>
+            <button onclick="stopSpeech()" style="background-color: #555; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px; margin-left: 5px;">
+                ⏹️ Durdur
+            </button>
+        </div>
+        <script>
+            function speakText_{current_idx}() {{
+                window.speechSynthesis.cancel();
+                var utterance = new SpeechSynthesisUtterance("{clean_text}");
+                utterance.lang = 'tr-TR';
+                utterance.rate = 1.0;
+                window.speechSynthesis.speak(utterance);
+            }}
+            function stopSpeech() {{
+                window.speechSynthesis.cancel();
+            }}
+        </script>
+        """
+        components.html(voice_html, height=50)
+        
         st.session_state.messages.append({"role": "assistant", "content": response_text})
