@@ -6,26 +6,28 @@ import re
 # --- SAYFA AYARLARI ---
 st.set_page_config(page_title="Yiğit AI Premium - Yerel Bulut", page_icon="💎", layout="wide")
 
-# --- MODELİ GÜVENLİ YÜKLEME ---
+# --- MODELİ GÜVENLİ VE HAFİF YÜKLEME ---
 @st.cache_resource
 def load_ai_model():
     try:
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
         
-        model_id = "Qwen/Qwen2.5-1.5B-Instruct"
+        # Çok daha az bellek tüketen ultra hafif model
+        model_id = "Qwen/Qwen2.5-0.5B-Instruct"
+        
         tokenizer = AutoTokenizer.from_pretrained(model_id)
         model = AutoModelForCausalLM.from_pretrained(
             model_id,
-            torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
-            device_map="auto"
+            torch_dtype=torch.float32,
+            low_cpu_mem_usage=True
         )
         pipe = pipeline("text-generation", model=model, tokenizer=tokenizer)
         return pipe, None
     except Exception as e:
         return None, str(e)
 
-with st.spinner("Yiğit AI bulut sunucusunda yükleniyor, lütfen bekleyin..."):
+with st.spinner("Yiğit AI yerel bulut motoru yükleniyor, lütfen bekleyin..."):
     ai_pipeline, error_message = load_ai_model()
 
 # --- SESSION STATES ---
@@ -60,10 +62,8 @@ st.title("💎 Yiğit AI - YEREL BULUT SÜRÜMÜ")
 st.write(f"Aktif Mod: **{ai_mode}** | Doğrudan Bulut Gücü Aktif")
 st.write("---")
 
-# Eğer model yüklenirken hata olduysa ekranda göster
 if error_message:
     st.error(f"⚠️ Model Yükleme Hatası: {error_message}")
-    st.info("İpucu: Hugging Face sunucusunun belleği yetersiz gelmiş olabilir veya requirements.txt eksik olabilir.")
 else:
     # --- GEÇMİŞİ EKRANA YAZDIRMA VE SESLİ OKUMA ---
     for idx, message in enumerate(st.session_state.messages):
@@ -115,7 +115,7 @@ else:
                     
                     outputs = ai_pipeline(
                         formatted_messages,
-                        max_new_tokens=512,
+                        max_new_tokens=256,
                         do_sample=True,
                         temperature=0.7,
                         top_p=0.9
