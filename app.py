@@ -5,19 +5,59 @@ import streamlit.components.v1 as components
 import re
 import urllib.parse
 import time
+import uuid
 
 # --- SAYFA AYARLARI ---
 st.set_page_config(page_title="Yiğit AI Premium", page_icon="💎", layout="wide")
 
-# --- SESSION STATES ---
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+# --- ÇOKLU SOHBET (CHAT SESSIONS) YÖNETİMİ ---
+if "sessions" not in st.session_state:
+    st.session_state.sessions = {} # {session_id: {"title": "...", "messages": [...]}}
+
+if "current_session_id" not in st.session_state or st.session_state.current_session_id not in st.session_state.sessions:
+    default_id = str(uuid.uuid4())
+    st.session_state.sessions[default_id] = {"title": "Yeni Sohbet", "messages": []}
+    st.session_state.current_session_id = default_id
 
 # --- SOL YAN MENÜ (SIDEBAR) ---
 with st.sidebar:
     st.title("💎 Yiğit AI Premium")
-    st.markdown("**Özel Kararlı Bulut Sürümü**")
+    st.markdown("**Gelişmiş Geçmiş Sürümü**")
     st.write("Bu sistem Yiğit tarafından en yüksek performans ve kararlılıkla donatılmıştır.")
+    st.write("---")
+    
+    # ➕ YENİ SOHBET BUTONU
+    if st.button("➕ Yeni Sohbet Başlat", use_container_width=True, type="primary"):
+        new_id = str(uuid.uuid4())
+        st.session_state.sessions[new_id] = {"title": "Yeni Sohbet", "messages": []}
+        st.session_state.current_session_id = new_id
+        st.rerun()
+
+    st.markdown("### 📜 Sohbet Geçmişi")
+    
+    # SOHBET GEÇMİŞİ LİSTESİ
+    for s_id in list(st.session_state.sessions.keys()):
+        s_title = st.session_state.sessions[s_id]["title"]
+        is_current = (s_id == st.session_state.current_session_id)
+        
+        col_btn, col_del = st.columns([0.8, 0.2])
+        with col_btn:
+            btn_label = f"💬 {s_title[:16]}..." if len(s_title) > 16 else f"💬 {s_title}"
+            if is_current:
+                btn_label = f"▶ {btn_label}"
+            
+            if st.button(btn_label, key=f"select_{s_id}", use_container_width=True):
+                st.session_state.current_session_id = s_id
+                st.rerun()
+                
+        with col_del:
+            if len(st.session_state.sessions) > 1:
+                if st.button("🗑️", key=f"del_{s_id}"):
+                    del st.session_state.sessions[s_id]
+                    if is_current:
+                        st.session_state.current_session_id = list(st.session_state.sessions.keys())[0]
+                    st.rerun()
+
     st.write("---")
     
     # ÇALIŞMA MODU
@@ -46,12 +86,6 @@ with st.sidebar:
         system_prompt = base_prompt + " Şu an Müzik Modundasın. Beste ve müzik teorisinde rehberlik et."
     else:
         system_prompt = base_prompt + " Kullanıcıya her konuda yardımcı olan son derece akıllı ve samimi bir asistansın."
-
-    st.write("---")
-    
-    if st.button("🗑️ Premium Sohbeti Sıfırla"):
-        st.session_state.messages = []
-        st.rerun()
 
     st.write("---")
     
@@ -87,13 +121,16 @@ with st.sidebar:
         except Exception as e:
             st.error(f"Hata: {str(e)}")
 
+# --- AKTİF SOHBET MESAJLARINI ÇEK ---
+current_messages = st.session_state.sessions[st.session_state.current_session_id]["messages"]
+
 # --- ANA EKRAN ---
 st.title("💎 Yiğit AI - PREMİUM SÜRÜM")
 st.write(f"Aktif Mod: **{ai_mode}** | Kararlı Bulut Altyapısı Aktif")
 st.write("---")
 
 # --- MESAJLARI EKRANA YAZDIRMA VE SESLİ OKUMA ---
-for idx, message in enumerate(st.session_state.messages):
+for idx, message in enumerate(current_messages):
     with st.chat_message(message["role"]):
         content = message["content"]
         if isinstance(content, list):
@@ -147,6 +184,10 @@ for idx, message in enumerate(st.session_state.messages):
 prompt = st.chat_input("Premium yapay zekanıza bir görev verin...")
 
 if prompt:
+    # Eğer bu sohbetin ilk mesajı ise başlığı otomatik adlandır
+    if len(current_messages) == 0:
+        st.session_state.sessions[st.session_state.current_session_id]["title"] = prompt[:22]
+
     image_triggers = ["resmini çiz", "görselini çiz", "resim çiz", "görsel çiz", "resmini yap", "fotoğrafını çiz", "draw ", "generate image"]
     is_image_request = any(trig in prompt.lower() for trig in image_triggers) or (ai_mode == "🎨 Görsel Tasarım & Çizim Uzmanı" and len(prompt) > 3)
 
@@ -155,7 +196,7 @@ if prompt:
             {"type": "text", "text": prompt},
             image_payload_data
         ]
-        st.session_state.messages.append({"role": "user", "content": user_content_structure})
+        current_messages.append({"role": "user", "content": user_content_structure})
         image_payload_data = None
     else:
         if file_info:
@@ -163,14 +204,14 @@ if prompt:
             file_info = ""
         else:
             full_prompt = prompt
-        st.session_state.messages.append({"role": "user", "content": full_prompt})
+        current_messages.append({"role": "user", "content": full_prompt})
 
     with st.chat_message("user"):
         st.markdown(prompt)
         
     with st.chat_message("assistant"):
         api_messages = [{"role": "system", "content": system_prompt}]
-        for m in st.session_state.messages:
+        for m in current_messages:
             m_content = m["content"]
             if isinstance(m_content, dict) and "text" in m_content:
                 api_messages.append({"role": m["role"], "content": m_content["text"]})
@@ -223,7 +264,7 @@ if prompt:
             st.image(generated_image_url, caption="Yiğit AI Tarafından Üretildi", width=500)
             st.markdown(response_text)
             
-            st.session_state.messages.append({
+            current_messages.append({
                 "role": "assistant", 
                 "content": {
                     "text": response_text,
@@ -232,6 +273,6 @@ if prompt:
             })
         else:
             st.markdown(response_text)
-            st.session_state.messages.append({"role": "assistant", "content": response_text})
+            current_messages.append({"role": "assistant", "content": response_text})
         
         st.rerun()
