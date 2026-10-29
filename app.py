@@ -107,7 +107,7 @@ current_messages = st.session_state.sessions[st.session_state.current_session_id
 
 # --- ANA EKRAN ---
 st.title("💎 Yiğit AI PREMİUM")
-st.write(f"Aktif Mod: **{ai_mode}")
+st.write(f"Aktif Mod: {ai_mode}")
 st.write("---")
 
 # --- MESAJLARI GÖSTER ---
