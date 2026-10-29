@@ -7,7 +7,24 @@ import urllib.parse
 import uuid
 
 # --- SAYFA AYARLARI ---
-st.set_page_config(page_title="Yiğit AI Akıllı Bulut", page_icon="💎", layout="wide")
+st.set_page_config(
+    page_title="Yiğit AI - Ultimate Ekosistem", 
+    page_icon="💎", 
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# --- ÖZEL ARAYÜZ STİLLERİ (GEMINI VİBES) ---
+st.markdown("""
+    <style>
+    .stChatInput input {
+        border-radius: 20px !important;
+    }
+    .stButton button {
+        border-radius: 10px !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 # --- ÇOKLU SOHBET (CHAT SESSIONS) YÖNETİMİ ---
 if "sessions" not in st.session_state:
@@ -21,7 +38,7 @@ if "current_session_id" not in st.session_state or st.session_state.current_sess
 # --- SOL YAN MENÜ (SIDEBAR) ---
 with st.sidebar:
     st.title("💎 Yiğit AI")
-    st.markdown("**Akıllı Bulut Modu (Kesintisiz)**")
+    st.markdown("**Gemini Gücünde Bulut Ekosistemi**")
     st.write("---")
     
     if st.button("➕ Yeni Sohbet Başlat", use_container_width=True, type="primary"):
@@ -55,30 +72,40 @@ with st.sidebar:
 
     st.write("---")
     
-    st.subheader("🎯 Çalışma Modu")
+    st.subheader("🎯 Yapay Zeka Yetenek Modları")
     ai_mode = st.selectbox(
-        "Çalışma Modu",
-        ["Genel Sohbet", "🎨 Görsel Tasarım & Çizim Uzmanı", "💻 Teknoloji & Yazılım", "🌍 Bilgi Bankası"],
+        "Mod Seçimi",
+        [
+            "Genel Uzman Asistan", 
+            "🎨 Görsel Tasarım & Flux Stüdyosu", 
+            "💻 Kıdemli Yazılım & Kod Mimarisi", 
+            "🧠 Derin Analiz & Mantık Yürütme",
+            "🌍 Çok Dilli Çeviri & Dil Uzmanı"
+        ],
         label_visibility="collapsed"
     )
     
     base_prompt = (
-        "Senin adın Yiğit AI. Sen YİĞİT tarafından geliştirilmiş özel bir yapay zekasın. "
-        "Asla 'ChatGPT' veya 'OpenAI' gibi ifadeler kullanma. "
+        "Senin adın Yiğit AI. Sen YİĞİT tarafından geliştirilmiş en gelişmiş, çok yönlü ve akıllı yapay zeka asistanısın. "
+        "Asla 'ChatGPT', 'Gemini' veya 'OpenAI' gibi ifadeler kullanma. "
         "Seni kimin geliştirdiği sorulduğunda SADECE 'Ben Yiğit tarafından geliştirildim' de. "
-        "Türkçe konuşulduğunda akıcı ve net Türkçe cevap ver."
+        "Sorulan sorulara derinlemesine, analitik, net ve son derece akıcı Türkçe ile yanıt ver."
     )
     
-    if ai_mode == "🎨 Görsel Tasarım & Çizim Uzmanı":
-        system_prompt = base_prompt + " Şu an Görsel Tasarım Modundasın."
-    elif ai_mode == "💻 Teknoloji & Yazılım":
-        system_prompt = base_prompt + " Şu an Teknoloji ve Yazılım Modundasın. İleri düzey kodlama desteği sun."
+    if ai_mode == "🎨 Görsel Tasarım & Flux Stüdyosu":
+        system_prompt = base_prompt + " Şu an Görsel Tasarım Modundasın. İstendiğinde yaratıcı görsel komutları üret."
+    elif ai_mode == "💻 Kıdemli Yazılım & Kod Mimarisi":
+        system_prompt = base_prompt + " Şu an Kıdemli Yazılım Modundasın. En temiz, optimize ve hatasız kodları sun."
+    elif ai_mode == "🧠 Derin Analiz & Mantık Yürütme":
+        system_prompt = base_prompt + " Şu an Derin Analiz Modundasın. Karmaşık problemleri adım adım mantık süzgecinden geçirerek açıkla."
+    elif ai_mode == "🌍 Çok Dilli Çeviri & Dil Uzmanı":
+        system_prompt = base_prompt + " Şu an Dil Uzmanı Modundasın. Çevirilerde ve dilbilgisinde kusursuz ol."
     else:
-        system_prompt = base_prompt + " Kullanıcıya her konuda yardımcı olan bir asistansın."
+        system_prompt = base_prompt + " Kullanıcının hayatını kolaylaştıran genel amaçlı üstün bir asistansın."
 
     st.write("---")
-    st.subheader("📁 Dosya / Veri Yükleme")
-    uploaded_file = st.file_uploader("Yükle", type=None, label_visibility="collapsed")
+    st.subheader("📁 Multimodal Veri Yükleme")
+    uploaded_file = st.file_uploader("Dosya veya Görsel Yükle", type=None, label_visibility="collapsed")
     
     file_info = ""
     image_payload_data = None
@@ -95,28 +122,28 @@ with st.sidebar:
                     "type": "image_url",
                     "image_url": {"url": f"data:{mime_type};base64,{encoded_image}"}
                 }
-                st.success(f"🖼️ **'{file_name}'** yüklendi!")
+                st.success(f"🖼️ **'{file_name}'** görseli algılandı!")
             else:
                 decoded_text = file_bytes.decode("utf-8")
-                file_info = f"--- DOSYA ADI: {file_name} ---\n{decoded_text}"
-                st.success(f"📎 **'{file_name}'** yüklendi!")
+                file_info = f"--- YÜKLENEN DOSYA İÇERİĞİ ({file_name}) ---\n{decoded_text}"
+                st.success(f"📎 **'{file_name}'** belgesi yüklendi!")
         except Exception as e:
-            st.error(f"Hata: {str(e)}")
+            st.error(f"Dosya okuma hatası: {str(e)}")
 
 # --- AKTİF SOHBETİ ÇEK ---
 current_messages = st.session_state.sessions[st.session_state.current_session_id]["messages"]
 
 # --- ANA EKRAN ---
 st.title("💎 Yiğit AI")
-st.write(f"Aktif Mod: **{ai_mode}** | Akıllı Bulut Altyapısı Aktif")
+st.caption(f"Aktif Mod: **{ai_mode}** | Gemini Düzeyinde Bulut Beyin Aktif")
 st.write("---")
 
-# --- MESAJLARI GÖSTER ---
+# --- GEÇMİŞ MESAJLARI GÖSTER ---
 for idx, message in enumerate(current_messages):
     with st.chat_message(message["role"]):
         content = message["content"]
         if isinstance(content, dict) and "generated_image" in content:
-            st.image(content["generated_image"], caption="Yiğit AI Tarafından Üretildi", width=500)
+            st.image(content["generated_image"], caption="Yiğit AI Stüdyo Üretimi", width=600)
             st.markdown(content["text"])
         elif isinstance(content, str):
             st.markdown(content)
@@ -125,7 +152,7 @@ for idx, message in enumerate(current_messages):
                 if part.get("type") == "text":
                     st.markdown(part["text"])
                 elif part.get("type") == "image_url":
-                    st.image(part["image_url"]["url"], width=300)
+                    st.image(part["image_url"]["url"], width=350)
             
         if message["role"] == "assistant":
             text_to_read = content.get("text", "Yanıt.") if isinstance(content, dict) else (content if isinstance(content, str) else "Yanıt.")
@@ -133,8 +160,8 @@ for idx, message in enumerate(current_messages):
             
             voice_html = f"""
             <div style="margin-top: 5px;">
-                <button onclick="speakText_{idx}()" style="background-color: #ff4b4b; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px;">🔊 Sesli Dinle</button>
-                <button onclick="stopSpeech()" style="background-color: #555; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px; margin-left: 5px;">⏹️ Durdur</button>
+                <button onclick="speakText_{idx}()" style="background-color: #2b2b2b; color: white; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 12px;">🔊 Sesli Dinle</button>
+                <button onclick="stopSpeech()" style="background-color: #444; color: white; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; margin-left: 5px;">⏹️ Durdur</button>
             </div>
             <script>
                 function speakText_{idx}() {{
@@ -146,17 +173,17 @@ for idx, message in enumerate(current_messages):
                 function stopSpeech() {{ window.speechSynthesis.cancel(); }}
             </script>
             """
-            components.html(voice_html, height=50)
+            components.html(voice_html, height=45)
 
-# --- GİRDİ ---
-prompt = st.chat_input("Yapay zekana komut ver...")
+# --- KULLANICI GİRDİSİ ---
+prompt = st.chat_input("Yiğit AI'ya istediklerini yaz, o düşünsün...")
 
 if prompt:
     if len(current_messages) == 0:
         st.session_state.sessions[st.session_state.current_session_id]["title"] = prompt[:22]
 
-    image_triggers = ["resmini çiz", "görselini çiz", "resim çiz", "görsel çiz", "resmini yap", "draw "]
-    is_image_request = any(trig in prompt.lower() for trig in image_triggers) or (ai_mode == "🎨 Görsel Tasarım & Çizim Uzmanı" and len(prompt) > 3)
+    image_triggers = ["resmini çiz", "görselini çiz", "resim çiz", "görsel çiz", "resmini yap", "çiz", "draw "]
+    is_image_request = any(trig in prompt.lower() for trig in image_triggers) or (ai_mode == "🎨 Görsel Tasarım & Flux Stüdyosu" and len(prompt) > 3)
 
     if image_payload_data:
         user_content = [{"type": "text", "text": prompt}, image_payload_data]
@@ -172,7 +199,7 @@ if prompt:
         
     with st.chat_message("assistant"):
         response_text = ""
-        with st.spinner("Yiğit AI düşünüyor..."):
+        with st.spinner("Yiğit AI düşünüyor ve analiz ediyor..."):
             try:
                 api_messages = [{"role": "system", "content": system_prompt}]
                 for m in current_messages:
@@ -185,8 +212,7 @@ if prompt:
                         text_part = "".join([p.get("text", "") for p in m_content if p.get("type") == "text"])
                         api_messages.append({"role": m["role"], "content": text_part})
                 
-                # --- AKILLI ÇOKLU GEÇİT (FALLBACK) SİSTEMİ ---
-                # Sunucu yoğunluk verirse otomatik olarak sıradaki alternatif modele/gecide geçer
+                # --- AKILLI ÇOKLU GEÇİT MOTORU (GEMINI DÜZEYİNDE KESİNTİSİZLİK) ---
                 endpoints_to_try = [
                     {"url": "https://text.pollinations.ai/", "payload": {"messages": api_messages, "model": "openai", "seed": 42}},
                     {"url": "https://text.pollinations.ai/", "payload": {"messages": api_messages, "model": "qwen", "seed": 42}},
@@ -196,7 +222,7 @@ if prompt:
                 success = False
                 for target in endpoints_to_try:
                     try:
-                        res = requests.post(target["url"], json=target["payload"], timeout=20)
+                        res = requests.post(target["url"], json=target["payload"], timeout=25)
                         if res.status_code == 200:
                             response_text = res.text
                             success = True
@@ -205,24 +231,21 @@ if prompt:
                         continue
                 
                 if not success:
-                    response_text = "Şu an bulut hatları biraz yoğun, lütfen birkaç saniye sonra tekrar dene."
+                    response_text = "Bulut hatları anlık olarak yoğunlaştı ancak sistem otomatik olarak yeniden deniyor. Lütfen sorunuzu tekrar gönderin."
                     
             except Exception as e:
-                response_text = f"Bağlantı hatası oluştu: {str(e)}"
+                response_text = f"Bağlantı hatası: {str(e)}"
 
         if is_image_request:
             clean_prompt = prompt.lower()
-            if "windows" in clean_prompt:
-                enhanced_img_prompt = "Windows 11 operating system glowing blue logo, futuristic digital background, 4k resolution, photorealistic"
-            else:
-                for kw in ["resmini çiz", "görselini çiz", "resim çiz", "görsel çiz", "resmini yap", "bana", "bir", "lütfen", "çiz"]:
-                    clean_prompt = clean_prompt.replace(kw, "")
-                enhanced_img_prompt = f"4k resolution, high quality, detailed, photorealistic, {clean_prompt.strip() or prompt}"
+            for kw in ["resmini çiz", "görselini çiz", "resim çiz", "görsel çiz", "resmini yap", "bana", "bir", "lütfen", "çiz"]:
+                clean_prompt = clean_prompt.replace(kw, "")
+            enhanced_img_prompt = f"masterpiece, 8k resolution, highly detailed, photorealistic, cinematic lighting, {clean_prompt.strip() or prompt}"
 
             encoded_img_prompt = urllib.parse.quote(enhanced_img_prompt)
             generated_image_url = f"https://image.pollinations.ai/prompt/{encoded_img_prompt}?width=1280&height=720&model=flux&nologo=true"
             
-            st.image(generated_image_url, caption="Yiğit AI Tarafından Üretildi", width=500)
+            st.image(generated_image_url, caption="Yiğit AI Stüdyo Üretimi", width=600)
             st.markdown(response_text)
             
             current_messages.append({
