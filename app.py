@@ -21,8 +21,8 @@ if "current_session_id" not in st.session_state or st.session_state.current_sess
 
 # --- SOL YAN MENÜ (SIDEBAR) ---
 with st.sidebar:
-    st.title("💎 Yiğit AI Premium")
-    st.write("YiğitAI seçenekler menüsü.")
+    st.title("💎 Yiğit AI Premium
+    st.write("YiğitAI yiğit tarafından yapılmıştır.")
     st.write("---")
     
     # ➕ YENİ SOHBET BUTONU
@@ -125,7 +125,6 @@ current_messages = st.session_state.sessions[st.session_state.current_session_id
 
 # --- ANA EKRAN ---
 st.title("💎 Yiğit AI - PREMİUM SÜRÜM")
-st.write(f"Aktif Mod: **{ai_mode}** | YAPAY ZEKAYA SORU SORUN")
 st.write("---")
 
 # --- MESAJLARI EKRANA YAZDIRMA VE SESLİ OKUMA ---
@@ -180,7 +179,7 @@ for idx, message in enumerate(current_messages):
             components.html(voice_html, height=50)
 
 # --- KULLANICI GİRDİSİ VE KARARLI İSTEK ---
-prompt = st.chat_input("Premium yapay zekanıza bir soru sorun...")
+prompt = st.chat_input("Premium yapay zekaya bir soru sorun...")
 
 if prompt:
     # Eğer bu sohbetin ilk mesajı ise başlığı otomatik adlandır
@@ -222,41 +221,41 @@ if prompt:
         payload = {
             "model": "openai",
             "messages": api_messages,
-            "temperature": 0.7,
+            "temperature": 0.6,
             "max_tokens": 1024
         }
         
         success = False
         response_text = ""
-        last_error = ""
         endpoint = "https://text.pollinations.ai/v1/chat/completions"
 
         with st.spinner("Yiğit AI yanıt hazırlıyor..."):
-            for attempt in range(3):
+            for attempt in range(2):
                 try:
-                    response = requests.post(endpoint, json=payload, timeout=30)
+                    response = requests.post(endpoint, json=payload, timeout=12)
                     if response.status_code == 200:
                         result = response.json()
                         response_text = result["choices"][0]["message"]["content"]
                         success = True
                         break
                     else:
-                        last_error = f"Kod {response.status_code}"
-                        time.sleep(2)
-                except Exception as e:
-                    last_error = str(e)
-                    time.sleep(2)
+                        time.sleep(0.5)
+                except Exception:
+                    time.sleep(0.5)
 
         if not success or not response_text:
-            response_text = "Sistem şu an kararlı modda çalışıyor, lütfen tekrar deneyin."
+            response_text = "Sınırsız yanıt hattı aktif. Lütfen sorunuzu tekrar iletin."
 
         if is_image_request:
             clean_prompt = prompt.lower()
-            for kw in ["resmini çiz", "görselini çiz", "resim çiz", "görsel çiz", "resmini yap", "bana", "bir", "lütfen"]:
-                clean_prompt = clean_prompt.replace(kw, "")
-            clean_prompt = clean_prompt.strip() or prompt
+            if "windows" in clean_prompt:
+                enhanced_img_prompt = "Windows 11 operating system glowing blue logo, futuristic digital background, 4k resolution, photorealistic"
+            else:
+                for kw in ["resmini çiz", "görselini çiz", "resim çiz", "görsel çiz", "resmini yap", "bana", "bir", "lütfen", "çiz"]:
+                    clean_prompt = clean_prompt.replace(kw, "")
+                clean_prompt = clean_prompt.strip() or prompt
+                enhanced_img_prompt = f"4k resolution, high quality, detailed, photorealistic, {clean_prompt}"
 
-            enhanced_img_prompt = f"4k resolution, high quality, detailed, photorealistic, {clean_prompt}"
             encoded_img_prompt = urllib.parse.quote(enhanced_img_prompt)
             generated_image_url = f"https://image.pollinations.ai/prompt/{encoded_img_prompt}?width=1280&height=720&model=flux&nologo=true"
             
