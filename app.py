@@ -7,7 +7,7 @@ import urllib.parse
 import uuid
 
 # --- SAYFA AYARLARI ---
-st.set_page_config(page_title="Yiğit AI PREMİUM", page_icon="💎", layout="wide")
+st.set_page_config(page_title="Yiğit AI", page_icon="💎", layout="wide")
 
 # --- ÇOKLU SOHBET (CHAT SESSIONS) YÖNETİMİ ---
 if "sessions" not in st.session_state:
@@ -15,12 +15,13 @@ if "sessions" not in st.session_state:
 
 if "current_session_id" not in st.session_state or st.session_state.current_session_id not in st.session_state.sessions:
     default_id = str(uuid.uuid4())
-    st.session_state.sessions[default_id] = {"title": "Yeni Yerel Sohbet", "messages": []}
+    st.session_state.sessions[default_id] = {"title": "Yeni Sohbet", "messages": []}
     st.session_state.current_session_id = default_id
 
 # --- SOL YAN MENÜ (SIDEBAR) ---
 with st.sidebar:
-    st.title("💎 Yiğit AI Yerel")
+    st.title("💎 Yiğit AI")
+    st.markdown("**Bulut Modu (Hızlı & Pratik)**")
     st.write("---")
     
     if st.button("➕ Yeni Sohbet Başlat", use_container_width=True, type="primary"):
@@ -73,7 +74,7 @@ with st.sidebar:
     elif ai_mode == "💻 Teknoloji & Yazılım":
         system_prompt = base_prompt + " Şu an Teknoloji ve Yazılım Modundasın. İleri düzey kodlama desteği sun."
     else:
-        system_prompt = base_prompt + " Kullanıcıya her konuda yardımcı olan yerel bir asistansın."
+        system_prompt = base_prompt + " Kullanıcıya her konuda yardımcı olan bir asistansın."
 
     st.write("---")
     st.subheader("📁 Dosya / Veri Yükleme")
@@ -106,8 +107,8 @@ with st.sidebar:
 current_messages = st.session_state.sessions[st.session_state.current_session_id]["messages"]
 
 # --- ANA EKRAN ---
-st.title("💎 Yiğit AI PREMİUM")
-st.write(f"Aktif Mod: {ai_mode}")
+st.title("💎 Yiğit AI")
+st.write(f"Aktif Mod: **{ai_mode}** | Bulut Altyapısı Aktif")
 st.write("---")
 
 # --- MESAJLARI GÖSTER ---
@@ -148,7 +149,7 @@ for idx, message in enumerate(current_messages):
             components.html(voice_html, height=50)
 
 # --- GİRDİ ---
-prompt = st.chat_input("YİĞİT AI YA BİR SORU SORUN...")
+prompt = st.chat_input("Yapay zekana komut ver...")
 
 if prompt:
     if len(current_messages) == 0:
@@ -170,43 +171,37 @@ if prompt:
         st.markdown(prompt)
         
     with st.chat_message("assistant"):
-        # Ollama Formatına Uygun Mesaj Hazırlığı
-        api_messages = [{"role": "system", "content": system_prompt}]
-        for m in current_messages:
-            m_content = m["content"]
-            if isinstance(m_content, dict) and "text" in m_content:
-                api_messages.append({"role": m["role"], "content": m_content["text"]})
-            elif isinstance(m_content, str):
-                api_messages.append({"role": m["role"], "content": m_content})
-            elif isinstance(m_content, list):
-                # Liste içindeki text parçalarını al
-                text_part = "".join([p.get("text", "") for p in m_content if p.get("type") == "text"])
-                api_messages.append({"role": m["role"], "content": text_part})
-        
-     # 'localhost' yerine doğrudan IPv4 adresi olan '127.0.0.1' kullanıyoruz
-        endpoint = "http://127.0.0.1:11434/api/chat"
-        payload = {
-            "model": "qwen2.5:7b",
-            "messages": api_messages,
-            "options": {
-                "temperature": 0.7,
-                "num_predict": 1024
-            },
-            "stream": False
-        }
-        
         response_text = ""
-        with st.spinner("Yiğit AI (Yerel Güç) düşünüyor..."):
+        with st.spinner("Yiğit AI düşünüyor..."):
             try:
-                response = requests.post(endpoint, json=payload, timeout=120)
+                # Pollinations AI Metin Servisi (Eski düzen bulut API)
+                api_messages = [{"role": "system", "content": system_prompt}]
+                for m in current_messages:
+                    m_content = m["content"]
+                    if isinstance(m_content, dict) and "text" in m_content:
+                        api_messages.append({"role": m["role"], "content": m_content["text"]})
+                    elif isinstance(m_content, str):
+                        api_messages.append({"role": m["role"], "content": m_content})
+                    elif isinstance(m_content, list):
+                        text_part = "".join([p.get("text", "") for p in m_content if p.get("type") == "text"])
+                        api_messages.append({"role": m["role"], "content": text_part})
+                
+                # İstek gönderimi
+                response = requests.post(
+                    "https://text.pollinations.ai/",
+                    json={
+                        "messages": api_messages,
+                        "model": "openai",
+                        "seed": 42
+                    },
+                    timeout=30
+                )
                 if response.status_code == 200:
-                    result = response.json()
-                    # Ollama'nın kendi formatından yanıtı alıyoruz:
-                    response_text = result["message"]["content"]
+                    response_text = response.text
                 else:
-                    response_text = f"Yerel sunucu hata kodu döndürdü: {response.status_code}"
+                    response_text = f"Sunucu yanıt döndüremedi (Kod: {response.status_code})"
             except Exception as e:
-                response_text = f"Bağlantı hatası: {str(e)}" 
+                response_text = f"Bağlantı hatası: {str(e)}"
 
         if is_image_request:
             clean_prompt = prompt.lower()
