@@ -191,24 +191,25 @@ if prompt:
                 for m in current_messages:
                     m_content = m["content"]
                     if isinstance(m_content, dict) and "text" in m_content:
-                        api_messages.append({"role": m["role"], "content": m_content["text"]});
+                        api_messages.append({"role": m["role"], "content": m_content["text"]})
                     elif isinstance(m_content, str):
                         api_messages.append({"role": m["role"], "content": m_content})
                     elif isinstance(m_content, list):
                         text_part = "".join([p.get("text", "") for p in m_content if p.get("type") == "text"])
                         api_messages.append({"role": m["role"], "content": text_part})
                 
-                # --- HIZLI VE EN İYİ VERİM ALINAN MODEL SIRALAMASI ---
+                # --- GELİŞTİRİLMİŞ ÇOKLU GEÇİT (FALLBACK) MEKANİZMASI ---
                 endpoints_to_try = [
                     {"url": "https://text.pollinations.ai/", "payload": {"messages": api_messages, "model": "openai", "seed": 42}},
                     {"url": "https://text.pollinations.ai/", "payload": {"messages": api_messages, "model": "qwen", "seed": 42}},
-                    {"url": "https://text.pollinations.ai/", "payload": {"messages": api_messages, "model": "mistral", "seed": 42}}
+                    {"url": "https://text.pollinations.ai/", "payload": {"messages": api_messages, "model": "mistral", "seed": 42}},
+                    {"url": "https://text.pollinations.ai/", "payload": {"messages": api_messages, "model": "sur", "seed": 42}}
                 ]
                 
                 success = False
                 for target in endpoints_to_try:
                     try:
-                        res = requests.post(target["url"], json=target["payload"], timeout=20)
+                        res = requests.post(target["url"], json=target["payload"], timeout=30)
                         if res.status_code == 200 and len(res.text.strip()) > 0:
                             response_text = res.text
                             success = True
@@ -217,7 +218,7 @@ if prompt:
                         continue
                 
                 if not success:
-                    response_text = "Hız optimizasyonu yapılıyor, lütfen sorunuzu tekrar gönderin."
+                    response_text = "Bulut hatlarında yoğunluk yaşandı. Lütfen sorunuzu tekrar gönderin, anında yanıt alacaksınız."
                     
             except Exception as e:
                 response_text = f"Bağlantı hatası: {str(e)}"
