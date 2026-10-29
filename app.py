@@ -7,7 +7,7 @@ import urllib.parse
 import uuid
 
 # --- SAYFA AYARLARI ---
-st.set_page_config(page_title="Yiğit AI Yerel Güç", page_icon="💎", layout="wide")
+st.set_page_config(page_title="Yiğit AI PREMİUM", page_icon="💎", layout="wide")
 
 # --- ÇOKLU SOHBET (CHAT SESSIONS) YÖNETİMİ ---
 if "sessions" not in st.session_state:
@@ -21,8 +21,6 @@ if "current_session_id" not in st.session_state or st.session_state.current_sess
 # --- SOL YAN MENÜ (SIDEBAR) ---
 with st.sidebar:
     st.title("💎 Yiğit AI Yerel")
-    st.markdown("**16GB RAM & Ryzen Gücü**")
-    st.write("Bu sistem tamamen senin bilgisayarında (Ollama) çalışır.")
     st.write("---")
     
     if st.button("➕ Yeni Sohbet Başlat", use_container_width=True, type="primary"):
@@ -108,8 +106,8 @@ with st.sidebar:
 current_messages = st.session_state.sessions[st.session_state.current_session_id]["messages"]
 
 # --- ANA EKRAN ---
-st.title("💎 Yiğit AI - YEREL & GÜÇLÜ SÜRÜM")
-st.write(f"Aktif Mod: **{ai_mode}** | Yerel Ollama Motoru (`qwen2.5:7b`) Aktif")
+st.title("💎 Yiğit AI PREMİUM")
+st.write(f"Aktif Mod: **{ai_mode}")
 st.write("---")
 
 # --- MESAJLARI GÖSTER ---
@@ -150,7 +148,7 @@ for idx, message in enumerate(current_messages):
             components.html(voice_html, height=50)
 
 # --- GİRDİ ---
-prompt = st.chat_input("Yerel yapay zekana komut ver...")
+prompt = st.chat_input("YİĞİT AI YA BİR SORU SORUN...")
 
 if prompt:
     if len(current_messages) == 0:
