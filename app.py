@@ -226,3 +226,22 @@ if prompt:
             for kw in ["resmini çiz", "görselini çiz", "resim çiz", "görsel çiz", "resmini yap", "bana", "bir", "lütfen", "çiz"]:
                 clean_prompt = clean_prompt.replace(kw, "")
             enhanced_img_prompt = f"masterpiece, 8k resolution, highly detailed, photorealistic, cinematic lighting, {clean_prompt.strip() or prompt}"
+
+            encoded_img_prompt = urllib.parse.quote(enhanced_img_prompt)
+            generated_image_url = f"https://image.pollinations.ai/prompt/{encoded_img_prompt}?width=1280&height=720&model=flux&nologo=true"
+            
+            st.image(generated_image_url, caption="YiğitAI Tarafından Üretildi", width=600)
+            st.markdown(response_text)
+            
+            current_messages.append({
+                "role": "assistant", 
+                "content": {
+                    "text": response_text,
+                    "generated_image": generated_image_url
+                }
+            })
+        else:
+            st.markdown(response_text)
+            current_messages.append({"role": "assistant", "content": response_text})
+        
+        st.rerun()
