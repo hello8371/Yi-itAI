@@ -183,8 +183,8 @@ if prompt:
                 text_part = "".join([p.get("text", "") for p in m_content if p.get("type") == "text"])
                 api_messages.append({"role": m["role"], "content": text_part})
         
-       # Ollama'nın yerel, hatasız ve doğrudan API adresi
-        endpoint = "http://localhost:11434/api/chat"
+     # 'localhost' yerine doğrudan IPv4 adresi olan '127.0.0.1' kullanıyoruz
+        endpoint = "http://127.0.0.1:11434/api/chat"
         payload = {
             "model": "qwen2.5:7b",
             "messages": api_messages,
