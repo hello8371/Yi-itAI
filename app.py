@@ -183,26 +183,30 @@ if prompt:
                 text_part = "".join([p.get("text", "") for p in m_content if p.get("type") == "text"])
                 api_messages.append({"role": m["role"], "content": text_part})
         
-        # KENDİ BİLGİSAYARINDAKİ OLLAMA SUNUCUSUNA BAĞLANTI (YEREL)
-        endpoint = "http://localhost:11434/v1/chat/completions"
+       # Ollama'nın yerel, hatasız ve doğrudan API adresi
+        endpoint = "http://localhost:11434/api/chat"
         payload = {
-            "model": "qwen2.5:7b",  # Bilgisayarındaki en güçlü model!
+            "model": "qwen2.5:7b",
             "messages": api_messages,
-            "temperature": 0.7,
-            "max_tokens": 1500
+            "options": {
+                "temperature": 0.7,
+                "num_predict": 1024
+            },
+            "stream": False
         }
         
         response_text = ""
         with st.spinner("Yiğit AI (Yerel Güç) düşünüyor..."):
             try:
-                response = requests.post(endpoint, json=payload, timeout=60)
+                response = requests.post(endpoint, json=payload, timeout=120)
                 if response.status_code == 200:
                     result = response.json()
-                    response_text = result["choices"][0]["message"]["content"]
+                    # Ollama'nın kendi formatından yanıtı alıyoruz:
+                    response_text = result["message"]["content"]
                 else:
                     response_text = f"Yerel sunucu hata kodu döndürdü: {response.status_code}"
             except Exception as e:
-                response_text = f"Ollama sunucusuna bağlanılamadı. Ollama'nın açık olduğundan emin olun. Hata: {str(e)}"
+                response_text = f"Bağlantı hatası: {str(e)}" 
 
         if is_image_request:
             clean_prompt = prompt.lower()
