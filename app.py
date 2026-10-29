@@ -21,7 +21,7 @@ if "current_session_id" not in st.session_state or st.session_state.current_sess
 
 # --- SOL YAN MENÜ (SIDEBAR) ---
 with st.sidebar:
-    st.title("💎 Yiğit AI Premium
+    st.title("💎 YiğitAI PREMİUM
     st.write("YiğitAI yiğit tarafından yapılmıştır.")
     st.write("---")
     
