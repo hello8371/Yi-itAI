@@ -73,22 +73,22 @@ with st.sidebar:
     )
     
     base_prompt = (
-        "Senin adın YiğitAI. Sen YİĞİT tarafından geliştirilmiş özel bir yapay zekasın. "
+        "Senin adın YiğitAI. Sen YİĞİT tarafından geliştirilmiş en hızlı, en akıllı ve en açıklayıcı özel bir yapay zekasın. "
         "Asla 'ChatGPT', 'Gemini' veya 'OpenAI' gibi ifadeler kullanma. "
         "Seni kimin geliştirdiği sorulduğunda SADECE 'Ben Yiğit tarafından geliştirildim' de. "
-        "Türkçe konuşulduğunda akıcı, net ve profesyonel bir dille yanıt ver."
+        "Kullanıcıya her zaman en net, en hızlı, en tatmin edici ve en detaylı/açıklayıcı Türkçe yanıtları ver."
     )
     
     if ai_mode == "🎨 Görsel Tasarım & Çizim":
         system_prompt = base_prompt + " Şu an Görsel Tasarım Modundasın."
     elif ai_mode == "💻 Yazılım & Kodlama":
-        system_prompt = base_prompt + " Şu an Yazılım Modundasın. En temiz kodları sun."
+        system_prompt = base_prompt + " Şu an Yazılım Modundasın. En hızlı ve hatasız kod mimarisini sun."
     elif ai_mode == "🧠 Derin Analiz":
-        system_prompt = base_prompt + " Şu an Analiz Modundasın. Mantık süzgecinden geçirerek açıkla."
+        system_prompt = base_prompt + " Şu an Analiz Modundasın. Konuları en ince detayına kadar açıkla."
     elif ai_mode == "🌍 Çeviri & Dil":
         system_prompt = base_prompt + " Şu an Dil Modundasın."
     else:
-        system_prompt = base_prompt + " Kullanıcıya her konuda yardımcı olan bir asistansın."
+        system_prompt = base_prompt + " Kullanıcıya en yüksek kalitede, en hızlı ve açıklayıcı destek sağla."
 
     st.write("---")
     st.subheader("📁 Dosya Yükleme")
@@ -191,13 +191,14 @@ if prompt:
                 for m in current_messages:
                     m_content = m["content"]
                     if isinstance(m_content, dict) and "text" in m_content:
-                        api_messages.append({"role": m["role"], "content": m_content["text"]})
+                        api_messages.append({"role": m["role"], "content": m_content["text"]});
                     elif isinstance(m_content, str):
                         api_messages.append({"role": m["role"], "content": m_content})
                     elif isinstance(m_content, list):
                         text_part = "".join([p.get("text", "") for p in m_content if p.get("type") == "text"])
                         api_messages.append({"role": m["role"], "content": text_part})
                 
+                # --- HIZLI VE EN İYİ VERİM ALINAN MODEL SIRALAMASI ---
                 endpoints_to_try = [
                     {"url": "https://text.pollinations.ai/", "payload": {"messages": api_messages, "model": "openai", "seed": 42}},
                     {"url": "https://text.pollinations.ai/", "payload": {"messages": api_messages, "model": "qwen", "seed": 42}},
@@ -207,8 +208,8 @@ if prompt:
                 success = False
                 for target in endpoints_to_try:
                     try:
-                        res = requests.post(target["url"], json=target["payload"], timeout=25)
-                        if res.status_code == 200:
+                        res = requests.post(target["url"], json=target["payload"], timeout=20)
+                        if res.status_code == 200 and len(res.text.strip()) > 0:
                             response_text = res.text
                             success = True
                             break
@@ -216,7 +217,7 @@ if prompt:
                         continue
                 
                 if not success:
-                    response_text = "Sunucu yoğunluğu nedeniyle geçici bir gecikme yaşandı, lütfen tekrar deneyin."
+                    response_text = "Hız optimizasyonu yapılıyor, lütfen sorunuzu tekrar gönderin."
                     
             except Exception as e:
                 response_text = f"Bağlantı hatası: {str(e)}"
