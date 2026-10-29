@@ -7,7 +7,7 @@ import urllib.parse
 import uuid
 
 # --- SAYFA AYARLARI ---
-st.set_page_config(page_title="Yiğit AI", page_icon="💎", layout="wide")
+st.set_page_config(page_title="Yiğit AI Akıllı Bulut", page_icon="💎", layout="wide")
 
 # --- ÇOKLU SOHBET (CHAT SESSIONS) YÖNETİMİ ---
 if "sessions" not in st.session_state:
@@ -21,7 +21,7 @@ if "current_session_id" not in st.session_state or st.session_state.current_sess
 # --- SOL YAN MENÜ (SIDEBAR) ---
 with st.sidebar:
     st.title("💎 Yiğit AI")
-    st.markdown("**Bulut Modu (Hızlı & Pratik)**")
+    st.markdown("**Akıllı Bulut Modu (Kesintisiz)**")
     st.write("---")
     
     if st.button("➕ Yeni Sohbet Başlat", use_container_width=True, type="primary"):
@@ -108,7 +108,7 @@ current_messages = st.session_state.sessions[st.session_state.current_session_id
 
 # --- ANA EKRAN ---
 st.title("💎 Yiğit AI")
-st.write(f"Aktif Mod: **{ai_mode}** | Bulut Altyapısı Aktif")
+st.write(f"Aktif Mod: **{ai_mode}** | Akıllı Bulut Altyapısı Aktif")
 st.write("---")
 
 # --- MESAJLARI GÖSTER ---
@@ -174,7 +174,6 @@ if prompt:
         response_text = ""
         with st.spinner("Yiğit AI düşünüyor..."):
             try:
-                # Pollinations AI Metin Servisi (Eski düzen bulut API)
                 api_messages = [{"role": "system", "content": system_prompt}]
                 for m in current_messages:
                     m_content = m["content"]
@@ -186,22 +185,30 @@ if prompt:
                         text_part = "".join([p.get("text", "") for p in m_content if p.get("type") == "text"])
                         api_messages.append({"role": m["role"], "content": text_part})
                 
-                # İstek gönderimi
-                response = requests.post(
-                    "https://text.pollinations.ai/",
-                    json={
-                        "messages": api_messages,
-                        "model": "openai",
-                        "seed": 42
-                    },
-                    timeout=30
-                )
-                if response.status_code == 200:
-                    response_text = response.text
-                else:
-                    response_text = f"Sunucu yanıt döndüremedi (Kod: {response.status_code})"
+                # --- AKILLI ÇOKLU GEÇİT (FALLBACK) SİSTEMİ ---
+                # Sunucu yoğunluk verirse otomatik olarak sıradaki alternatif modele/gecide geçer
+                endpoints_to_try = [
+                    {"url": "https://text.pollinations.ai/", "payload": {"messages": api_messages, "model": "openai", "seed": 42}},
+                    {"url": "https://text.pollinations.ai/", "payload": {"messages": api_messages, "model": "qwen", "seed": 42}},
+                    {"url": "https://text.pollinations.ai/", "payload": {"messages": api_messages, "model": "mistral", "seed": 42}}
+                ]
+                
+                success = False
+                for target in endpoints_to_try:
+                    try:
+                        res = requests.post(target["url"], json=target["payload"], timeout=20)
+                        if res.status_code == 200:
+                            response_text = res.text
+                            success = True
+                            break
+                    except:
+                        continue
+                
+                if not success:
+                    response_text = "Şu an bulut hatları biraz yoğun, lütfen birkaç saniye sonra tekrar dene."
+                    
             except Exception as e:
-                response_text = f"Bağlantı hatası: {str(e)}"
+                response_text = f"Bağlantı hatası oluştu: {str(e)}"
 
         if is_image_request:
             clean_prompt = prompt.lower()
