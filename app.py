@@ -22,8 +22,7 @@ if "current_session_id" not in st.session_state or st.session_state.current_sess
 # --- SOL YAN MENÜ (SIDEBAR) ---
 with st.sidebar:
     st.title("💎 Yiğit AI Premium")
-    st.markdown("**Gelişmiş Geçmiş Sürümü**")
-    st.write("Bu sistem Yiğit tarafından en yüksek performans ve kararlılıkla donatılmıştır.")
+    st.write("YiğitAI seçenekler menüsü.")
     st.write("---")
     
     # ➕ YENİ SOHBET BUTONU
@@ -126,7 +125,7 @@ current_messages = st.session_state.sessions[st.session_state.current_session_id
 
 # --- ANA EKRAN ---
 st.title("💎 Yiğit AI - PREMİUM SÜRÜM")
-st.write(f"Aktif Mod: **{ai_mode}** | Kararlı Bulut Altyapısı Aktif")
+st.write(f"Aktif Mod: **{ai_mode}** | YAPAY ZEKAYA SORU SORUN")
 st.write("---")
 
 # --- MESAJLARI EKRANA YAZDIRMA VE SESLİ OKUMA ---
@@ -181,7 +180,7 @@ for idx, message in enumerate(current_messages):
             components.html(voice_html, height=50)
 
 # --- KULLANICI GİRDİSİ VE KARARLI İSTEK ---
-prompt = st.chat_input("Premium yapay zekanıza bir görev verin...")
+prompt = st.chat_input("Premium yapay zekanıza bir soru sorun...")
 
 if prompt:
     # Eğer bu sohbetin ilk mesajı ise başlığı otomatik adlandır
