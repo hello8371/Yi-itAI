@@ -226,5 +226,3 @@ if prompt:
             for kw in ["resmini çiz", "görselini çiz", "resim çiz", "görsel çiz", "resmini yap", "bana", "bir", "lütfen", "çiz"]:
                 clean_prompt = clean_prompt.replace(kw, "")
             enhanced_img_prompt = f"masterpiece, 8k resolution, highly detailed, photorealistic, cinematic lighting, {clean_prompt.strip() or prompt}"
-
-            encoded
